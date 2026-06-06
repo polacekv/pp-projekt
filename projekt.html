@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projekt — PP projekt s.r.o.</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ── PHASE TABS ── */
+.phase-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.phase-tab {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 5px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-m);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.phase-tab:hover   { border-color: var(--accent); color: var(--accent); }
+.phase-tab.active  { background: var(--accent); border-color: var(--accent); color: #fff; }
+.phase-tab .ph-count {
+  background: rgba(255,255,255,.22);
+  border-radius: 2px;
+  padding: 0 5px;
+  font-size: 9px;
+}
+.phase-tab:not(.active) .ph-count {
+  background: var(--surface2);
+  color: var(--text-m);
+}
+
+/* ── TASK TABLE ── */
+.task-status-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  transition: all .12s;
+  flex-shrink: 0;
+}
+.task-status-btn[data-s="0"] { border-color: var(--border); }
+.task-status-btn[data-s="1"] { border-color: var(--warn); background: var(--warn-lt); }
+.task-status-btn[data-s="2"] { border-color: var(--accent); background: var(--surface3); color: var(--accent); }
+.task-status-btn[data-s="3"] { border-color: var(--ok); background: var(--ok-lt); color: var(--ok); }
+
+.status-cycle { cursor: pointer; }
+
+/* Progress in cell */
+.task-prog-wrap {
+  display: flex; align-items: center; gap: 6px;
+}
+.task-prog-bar {
+  flex: 1; height: 4px; background: var(--border); border-radius: 2px;
+}
+.task-prog-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+.task-prog-pct { font-family: var(--mono); font-size: 10px; width: 28px; text-align: right; }
+
+/* Task name with sub-tasks indicator */
+.task-name-cell { display: flex; align-items: center; gap: 8px; }
+.task-name-cell .task-name-txt { flex:1; }
+.subtask-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 1px 5px;
+  color: var(--text-m);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.subtask-badge:hover { background: var(--surface3); }
+
+/* Subtasks accordion */
+.subtask-row td {
+  background: var(--surface3);
+  padding: 8px 16px 8px 48px !important;
+}
+.subtask-row .sub-list { list-style: none; margin: 0; padding: 0; }
+.subtask-row .sub-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.subtask-row .sub-item:last-child { border-bottom: none; }
+.sub-check {
+  width: 14px; height: 14px;
+  border-radius: 2px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.sub-check.done { border-color: var(--ok); background: var(--ok-lt); color: var(--ok); }
+
+/* Phase header in table */
+.task-add-row td {
+  padding: 8px 12px;
+  background: var(--surface3);
+  border-top: 1px solid var(--border);
+}
+
+/* Project header strip */
+.proj-strip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--sh);
+}
+.proj-strip-color { width: 6px; height: 48px; border-radius: 3px; flex-shrink: 0; }
+.proj-strip-name { font-size: 18px; font-weight: 700; }
+.proj-strip-sub  { font-size: 12px; color: var(--text-m); margin-top: 2px; }
+.proj-strip-badge { margin-left: auto; }
+.proj-phase-progress { margin-left: 32px; flex: 1; }
+
+/* Inline editable URL */
+.task-url-cell a { font-size: 11px; color: var(--accent); text-decoration: none; }
+.task-url-cell a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<div class="main-wrap">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title" id="page-title">Checklist projektu</div>
+      <div class="page-subtitle" id="page-subtitle">…</div>
+    </div>
+    <div class="page-header-right">
+      <a class="btn" href="index.html">← Zpět</a>
+      <button class="btn btn-ok" onclick="saveAll()">💾 Uložit vše</button>
+    </div>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="loading-state"><div class="spinner"></div> Načítám projekt…</div>
+  </div>
+
+  <div class="page-footer">PP projekt s.r.o. · Checklist projektu · <span id="footer-year"></span></div>
+</div>
+
+<!-- ── MODAL: Upravit úkol ── -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-task-title">Upravit úkol</div>
+      <button class="modal-close" onclick="Utils.closeModal('modal-task')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Název úkolu *</label>
+        <input class="form-input" id="t-name" placeholder="Název úkolu">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Popis / instrukce</label>
+        <textarea class="form-input" id="t-desc" rows="2" placeholder="Volitelný popis…"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Odpovědná osoba</label>
+          <select class="form-select" id="t-owner"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline</label>
+          <input class="form-input" id="t-deadline" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Postup (%)</label>
+          <input class="form-input" id="t-progress" type="number" min="0" max="100" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Odkaz (URL)</label>
+        <input class="form-input" id="t-url" type="url" placeholder="https://…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Poznámka</label>
+        <textarea class="form-input" id="t-note" rows="2" placeholder="Interní poznámka…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteTask()">Smazat</button>
+      <button class="btn" onclick="Utils.closeModal('modal-task')">Zrušit</button>
+      <button class="btn btn-ok" onclick="saveTask()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+const pid = Utils.getParam('id');
+let project = null;
+let tasks   = [];
+let workers = [];
+let editingTaskIdx = null;
+let activePhase = 0;
+let expandedSubs = new Set();
+
+const STATUS_LABELS = ['', 'Rozpracováno', 'Ke kontrole', 'Hotovo'];
+const STATUS_ICONS  = ['○', '◑', '◎', '✓'];
+
+async function init() {
+  Sidebar.render('checklist');
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+  Utils.setupModalClose('modal-task');
+
+  if (!pid) {
+    document.getElementById('main-content').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div>Chybí parametr projektu v URL (?id=…).</div>';
+    return;
+  }
+
+  const projects = await STORE.getProjects();
+  project = projects.find(p => p.id === pid);
+  if (!project) {
+    document.getElementById('main-content').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">⚠️</div>Projekt nebyl nalezen.</div>';
+    return;
+  }
+
+  [tasks, workers] = await Promise.all([STORE.getTasks(pid), STORE.getWorkers()]);
+  if (!tasks.length) tasks = initDefaultTasks();
+
+  document.getElementById('page-title').textContent   = project.name;
+  document.getElementById('page-subtitle').textContent = [project.num, project.address, project.client].filter(Boolean).join(' · ');
+  document.title = project.name + ' — PP projekt';
+
+  render();
+}
+
+/* ── DEFAULT TASKS FROM TEMPLATE ── */
+function initDefaultTasks() {
+  const result = [];
+  (project.phases || []).forEach((ph, phIdx) => {
+    const tpl = CONFIG.PHASE_TEMPLATES.find(t => t.key === ph.key);
+    if (!tpl) return;
+    (tpl.tasks || []).forEach((name, i) => {
+      result.push({
+        id: `t-${phIdx}-${i}-${Date.now()}`,
+        phase: phIdx,
+        name,
+        desc: '', sub: [], owner: '', status: 0, progress: 0,
+        deadline: '', note: '', url: '', completed: false,
+      });
+    });
+  });
+  return result;
+}
+
+/* ── RENDER ── */
+function render() {
+  const phases = project.phases || [];
+  const mc = document.getElementById('main-content');
+
+  if (!phases.length) {
+    mc.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>Tento projekt nemá žádné fáze.</div>';
+    return;
+  }
+
+  // Tabs
+  const tabsHtml = phases.map((ph, i) => {
+    const phaseTasks = tasks.filter(t => t.phase === i);
+    const done = phaseTasks.filter(t => t.status === 3).length;
+    return `<button class="phase-tab${i===activePhase?' active':''}" onclick="switchPhase(${i})">
+      ${ph.icon || ''} ${ph.label}
+      <span class="ph-count">${done}/${phaseTasks.length}</span>
+    </button>`;
+  }).join('');
+
+  // Project strip
+  const ph = phases[activePhase];
+  const phaseTasks = tasks.filter(t => t.phase === activePhase);
+  const done = phaseTasks.filter(t => t.status === 3).length;
+  const pct  = phaseTasks.length ? Math.round(done/phaseTasks.length*100) : 0;
+
+  const stripHtml = `<div class="proj-strip">
+    <div class="proj-strip-color" style="background:${project.color}"></div>
+    <div>
+      <div class="proj-strip-name">${project.name}</div>
+      <div class="proj-strip-sub">${[project.num,project.address].filter(Boolean).join(' · ')}</div>
+    </div>
+    <div class="proj-phase-progress">
+      <div class="mono" style="font-size:10px;margin-bottom:6px;color:var(--text-m)">
+        Fáze: <strong>${ph.label}</strong> · ${done} z ${phaseTasks.length} úkolů dokončeno
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    ${project.status ? `<span class="badge badge-${project.status} proj-strip-badge">${Utils.projectStatusLabel(project.status)}</span>` : ''}
+  </div>`;
+
+  // Task table
+  const tableHtml = renderTaskTable(phaseTasks, activePhase);
+
+  mc.innerHTML = `
+    ${stripHtml}
+    <div class="phase-tabs">${tabsHtml}</div>
+    ${tableHtml}
+    <div class="task-add-row" style="margin-top:12px">
+      <button class="btn" onclick="addTask(${activePhase})">+ Přidat úkol</button>
+    </div>
+  `;
+}
+
+function renderTaskTable(phaseTasks, phaseIdx) {
+  if (!phaseTasks.length) {
+    return `<div class="empty-state" style="padding:32px">
+      <div class="empty-icon">📝</div>V této fázi nejsou žádné úkoly.
+      <button class="btn" style="margin-top:12px" onclick="addTask(${phaseIdx})">+ Přidat první úkol</button>
+    </div>`;
+  }
+
+  const rows = phaseTasks.map((t, localIdx) => {
+    const globalIdx = tasks.indexOf(t);
+    return renderTaskRow(t, globalIdx, localIdx);
+  }).join('');
+
+  return `<div class="card" style="overflow:auto;padding:0">
+    <table class="table" style="min-width:900px">
+      <thead>
+        <tr>
+          <th style="width:32px">#</th>
+          <th style="width:36px">Stav</th>
+          <th>Úkol</th>
+          <th style="width:140px">Odpovědný</th>
+          <th style="width:110px">Deadline</th>
+          <th style="width:120px">Postup</th>
+          <th style="width:150px">Odkaz</th>
+          <th style="width:36px"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function renderTaskRow(t, gIdx, num) {
+  const ownerName = t.owner
+    ? (workers.find(w=>w.id===t.owner)?.name || t.owner)
+    : '—';
+
+  const subCount = (t.sub||[]).length;
+  const subDone  = (t.sub||[]).filter(s=>s.completed).length;
+  const subBadge = subCount
+    ? `<span class="subtask-badge" onclick="toggleSub(${gIdx})" title="Dílčí úkoly">
+        ▸ ${subDone}/${subCount}
+       </span>`
+    : '';
+
+  const expanded = expandedSubs.has(gIdx);
+  const subRow = (subCount && expanded)
+    ? `<tr class="subtask-row"><td colspan="8">
+        <ul class="sub-list">
+          ${(t.sub||[]).map((s,si)=>`<tr style="display:contents">
+            <div class="sub-item">
+              <div class="sub-check${s.completed?' done':''}" onclick="toggleSubItem(${gIdx},${si})">
+                ${s.completed?'✓':''}
+              </div>
+              <span style="${s.completed?'text-decoration:line-through;color:var(--text-m)':''}">${s.name}</span>
+            </div>`).join('')}
+        </ul>
+      </td></tr>`
+    : '';
+
+  const statusClass = ['','warn','accent','ok'][t.status] || '';
+
+  return `<tr id="tr-${gIdx}">
+    <td class="mono" style="font-size:10px;color:var(--text-m)">${String(num+1).padStart(2,'0')}</td>
+    <td>
+      <div class="task-status-btn" data-s="${t.status}" title="${STATUS_LABELS[t.status]||'Nezahájeno'}"
+        onclick="cycleStatus(${gIdx})">
+        ${STATUS_ICONS[t.status]||'○'}
+      </div>
+    </td>
+    <td>
+      <div class="task-name-cell">
+        <div class="task-name-txt${t.status===3?' line-through text-m':''}">${t.name}</div>
+        ${subBadge}
+      </div>
+      ${t.desc?`<div class="mono" style="font-size:10px;color:var(--text-m);margin-top:2px">${t.desc}</div>`:''}
+    </td>
+    <td class="mono" style="font-size:11px">${ownerName}</td>
+    <td class="mono" style="font-size:10px;color:var(--text-m)">${t.deadline||'—'}</td>
+    <td>
+      <div class="task-prog-wrap">
+        <div class="task-prog-bar"><div class="task-prog-fill" style="width:${t.progress||0}%"></div></div>
+        <div class="task-prog-pct">${t.progress||0}%</div>
+      </div>
+    </td>
+    <td class="task-url-cell">
+      ${t.url ? `<a href="${t.url}" target="_blank" title="${t.url}">🔗 Odkaz</a>` : ''}
+    </td>
+    <td>
+      <button class="btn btn-sm" onclick="openEditTask(${gIdx})" title="Upravit">✎</button>
+    </td>
+  </tr>${subRow}`;
+}
+
+/* ── INTERACTIONS ── */
+function switchPhase(i) {
+  activePhase = i;
+  expandedSubs.clear();
+  render();
+}
+
+function cycleStatus(gIdx) {
+  const t = tasks[gIdx];
+  t.status = (t.status + 1) % 4;
+  if (t.status === 3) t.progress = 100;
+  if (t.status === 0) t.progress = 0;
+  render();
+  STORE.saveTasks(pid, tasks);
+}
+
+function toggleSub(gIdx) {
+  if (expandedSubs.has(gIdx)) expandedSubs.delete(gIdx);
+  else expandedSubs.add(gIdx);
+  render();
+}
+
+function toggleSubItem(gIdx, si) {
+  tasks[gIdx].sub[si].completed = !tasks[gIdx].sub[si].completed;
+  // Update parent progress based on sub completion
+  const subs = tasks[gIdx].sub;
+  const pct = Math.round(subs.filter(s=>s.completed).length / subs.length * 100);
+  tasks[gIdx].progress = pct;
+  if (pct === 100) tasks[gIdx].status = 3;
+  render();
+  STORE.saveTasks(pid, tasks);
+}
+
+function addTask(phaseIdx) {
+  tasks.push({
+    id: 't-' + Date.now(),
+    phase: phaseIdx,
+    name: 'Nový úkol',
+    desc: '', sub: [], owner: '', status: 0, progress: 0,
+    deadline: '', note: '', url: '', completed: false,
+  });
+  const newIdx = tasks.length - 1;
+  render();
+  openEditTask(newIdx);
+}
+
+function openEditTask(gIdx) {
+  editingTaskIdx = gIdx;
+  const t = tasks[gIdx];
+  document.getElementById('modal-task-title').textContent = 'Upravit úkol';
+  document.getElementById('t-name').value     = t.name     || '';
+  document.getElementById('t-desc').value     = t.desc     || '';
+  document.getElementById('t-deadline').value = t.deadline || '';
+  document.getElementById('t-progress').value = t.progress || 0;
+  document.getElementById('t-url').value      = t.url      || '';
+  document.getElementById('t-note').value     = t.note     || '';
+
+  // Owner select from team
+  const ownerSel = document.getElementById('t-owner');
+  const teamIds = project.teamIds || [];
+  const teamWorkers = workers.filter(w => teamIds.includes(w.id));
+  ownerSel.innerHTML = '<option value="">— bez přiřazení —</option>'
+    + teamWorkers.map(w => `<option value="${w.id}" ${t.owner===w.id?'selected':''}>${w.name}</option>`).join('')
+    + (teamWorkers.length === 0
+        ? workers.map(w=>`<option value="${w.id}" ${t.owner===w.id?'selected':''}>${w.name}</option>`).join('')
+        : '');
+
+  Utils.openModal('modal-task');
+}
+
+function saveTask() {
+  const t = tasks[editingTaskIdx];
+  t.name     = document.getElementById('t-name').value.trim() || t.name;
+  t.desc     = document.getElementById('t-desc').value.trim();
+  t.owner    = document.getElementById('t-owner').value;
+  t.deadline = document.getElementById('t-deadline').value;
+  t.progress = parseInt(document.getElementById('t-progress').value) || 0;
+  t.url      = document.getElementById('t-url').value.trim();
+  t.note     = document.getElementById('t-note').value.trim();
+  if (t.progress >= 100) t.status = 3;
+  Utils.closeModal('modal-task');
+  render();
+  STORE.saveTasks(pid, tasks);
+}
+
+function deleteTask() {
+  if (!confirm('Opravdu smazat úkol?')) return;
+  tasks.splice(editingTaskIdx, 1);
+  Utils.closeModal('modal-task');
+  render();
+  STORE.saveTasks(pid, tasks);
+}
+
+async function saveAll() {
+  await STORE.saveTasks(pid, tasks);
+  Toast.ok('Checklist uložen ✓');
+}
+
+init();
+</script>
+</body>
+</html>

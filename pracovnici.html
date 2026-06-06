@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pracovníci — PP projekt s.r.o.</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ── WORKER CARDS ── */
+.worker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.worker-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--sh);
+  overflow: hidden;
+}
+.worker-card-header {
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.worker-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.worker-name { font-size: 14px; font-weight: 600; }
+.worker-role { font-family: var(--mono); font-size: 10px; color: var(--text-m); margin-top: 2px; }
+.worker-contact { font-size: 11px; color: var(--text-m); margin-top: 2px; }
+.worker-card-actions { margin-left: auto; display: flex; gap: 6px; align-items: flex-start; }
+.worker-card-body { padding: 14px 18px; }
+.worker-projects-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-m);
+  margin-bottom: 10px;
+}
+.reward-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.reward-row .proj-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.reward-row .reward-input {
+  width: 100px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: right;
+}
+.reward-row .reward-note {
+  flex: 1;
+  font-size: 10px;
+}
+.reward-row .proj-color {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.worker-empty { font-family: var(--mono); font-size: 10px; color: var(--text-m); text-align: center; padding: 12px 0; }
+
+/* ── MODAL ── */
+.modal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.modal-form-grid .full { grid-column: 1/-1; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<div class="main-wrap">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Pracovníci</div>
+      <div class="page-subtitle">Evidence pracovníků a odměn na projektech</div>
+    </div>
+    <div class="page-header-right">
+      <button class="btn btn-ok" onclick="Utils.openModal('modal-add')">+ Přidat pracovníka</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- KPI summary -->
+    <div class="kpi-grid" id="kpi-grid" style="grid-template-columns: repeat(4,1fr); margin-bottom:24px">
+      <div class="kpi-card kpi-accent">
+        <div class="kpi-label">Pracovníci celkem</div>
+        <div class="kpi-value" id="kpi-count">—</div>
+      </div>
+      <div class="kpi-card kpi-ok">
+        <div class="kpi-label">Aktivní projekty</div>
+        <div class="kpi-value" id="kpi-active">—</div>
+      </div>
+      <div class="kpi-card kpi-warn">
+        <div class="kpi-label">Celkem odměny</div>
+        <div class="kpi-value" id="kpi-rewards">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Průměr / pracovník</div>
+        <div class="kpi-value" id="kpi-avg">—</div>
+      </div>
+    </div>
+
+    <!-- Worker grid -->
+    <div id="worker-grid">
+      <div class="loading-state"><div class="spinner"></div> Načítám pracovníky…</div>
+    </div>
+  </div>
+
+  <div class="page-footer">PP projekt s.r.o. · Evidence pracovníků · <span id="footer-year"></span></div>
+</div>
+
+<!-- ── MODAL: Přidat / editovat pracovníka ── -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-add-title">Přidat pracovníka</div>
+      <button class="modal-close" onclick="Utils.closeModal('modal-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-form-grid">
+        <div class="form-group full">
+          <label class="form-label">Jméno a příjmení *</label>
+          <input class="form-input" id="f-name" placeholder="Jan Novák" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role / pozice</label>
+          <input class="form-input" id="f-role" placeholder="Projektant, HIP, …">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefon</label>
+          <input class="form-input" id="f-phone" placeholder="+420 …">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-input" id="f-email" type="email" placeholder="jan@pprojekt.cz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Poznámka</label>
+          <input class="form-input" id="f-note" placeholder="Interní, OSVČ, …">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="Utils.closeModal('modal-add')">Zrušit</button>
+      <button class="btn btn-ok" onclick="saveWorker()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Přiřadit projekt ── -->
+<div class="modal-overlay" id="modal-assign">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Přiřadit projekt</div>
+      <button class="modal-close" onclick="Utils.closeModal('modal-assign')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Vyberte projekt</label>
+        <select class="form-select" id="assign-proj"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fixní odměna (Kč bez DPH)</label>
+        <input class="form-input" id="assign-amount" type="number" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Poznámka</label>
+        <input class="form-input" id="assign-note" placeholder="volitelná poznámka…">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="Utils.closeModal('modal-assign')">Zrušit</button>
+      <button class="btn btn-ok" onclick="confirmAssign()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+let workers  = [];
+let projects = [];
+let editingId = null;
+let assigningId = null;
+
+async function init() {
+  Sidebar.render('pracovnici');
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+  Utils.setupModalClose('modal-add');
+  Utils.setupModalClose('modal-assign');
+  await reload();
+}
+
+async function reload() {
+  [workers, projects] = await Promise.all([STORE.getWorkers(), STORE.getProjects()]);
+  updateKPI();
+  renderGrid();
+}
+
+/* ── KPI ── */
+function updateKPI() {
+  let totalReward = 0;
+  workers.forEach(w => {
+    Object.values(w.projectRewards || {}).forEach(r => { totalReward += Utils.parseKc(r.amount); });
+  });
+  const active = projects.filter(p => p.status === 'probihá' || p.status === 'nová').length;
+
+  document.getElementById('kpi-count').textContent   = workers.length;
+  document.getElementById('kpi-active').textContent  = active;
+  document.getElementById('kpi-rewards').textContent = Utils.formatKc(totalReward);
+  document.getElementById('kpi-avg').textContent     = workers.length
+    ? Utils.formatKc(Math.round(totalReward / workers.length)) : '—';
+}
+
+/* ── RENDER GRID ── */
+function renderGrid() {
+  const el = document.getElementById('worker-grid');
+  if (!workers.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">👤</div>
+      Zatím žádní pracovníci — přidejte prvního kliknutím na tlačítko výše.
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="worker-grid">${workers.map(w => renderCard(w)).join('')}</div>`;
+}
+
+function renderCard(w) {
+  const initials = w.name.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+  const rewards  = w.projectRewards || {};
+  const myProjs  = projects.filter(p => rewards[p.id] !== undefined);
+
+  const rewardRows = myProjs.length
+    ? myProjs.map(p => `<div class="reward-row">
+        <div class="proj-color" style="background:${p.color}"></div>
+        <div class="proj-label" title="${p.name}">${p.name}</div>
+        <input class="form-input reward-input inline-input" value="${rewards[p.id]?.amount || 0}"
+          title="Odměna Kč"
+          onchange="updateReward('${w.id}','${p.id}','amount',this.value)">
+        <input class="form-input reward-note inline-input" value="${rewards[p.id]?.note || ''}"
+          placeholder="poznámka…"
+          onchange="updateReward('${w.id}','${p.id}','note',this.value)">
+        <button class="btn btn-sm btn-danger" title="Odebrat z projektu"
+          onclick="removeFromProject('${w.id}','${p.id}')">✕</button>
+      </div>`).join('')
+    : `<div class="worker-empty">Nepřiřazen k žádnému projektu</div>`;
+
+  const totalW = myProjs.reduce((s,p) => s + Utils.parseKc(rewards[p.id]?.amount), 0);
+
+  return `<div class="worker-card">
+    <div class="worker-card-header">
+      <div class="worker-avatar">${initials}</div>
+      <div>
+        <div class="worker-name">${w.name}</div>
+        <div class="worker-role">${w.role || '—'}</div>
+        <div class="worker-contact">${[w.phone,w.email].filter(Boolean).join(' · ') || ''}</div>
+      </div>
+      <div class="worker-card-actions">
+        <button class="btn btn-sm" title="Přiřadit projekt"
+          onclick="openAssign('${w.id}')">+ Projekt</button>
+        <button class="btn btn-sm" title="Upravit pracovníka"
+          onclick="openEdit('${w.id}')">✎</button>
+        <button class="btn btn-sm btn-danger" title="Smazat pracovníka"
+          onclick="deleteWorker('${w.id}')">✕</button>
+      </div>
+    </div>
+    <div class="worker-card-body">
+      <div class="worker-projects-label">Projekty${myProjs.length ? ' · celkem ' + Utils.formatKc(totalW) : ''}</div>
+      ${rewardRows}
+      ${w.note ? `<div class="mono" style="font-size:10px;color:var(--text-m);margin-top:8px">📝 ${w.note}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+/* ── MODAL: ADD / EDIT ── */
+function openEdit(id) {
+  editingId = id;
+  const w = workers.find(x => x.id === id);
+  document.getElementById('modal-add-title').textContent = 'Upravit pracovníka';
+  document.getElementById('f-name').value  = w.name  || '';
+  document.getElementById('f-role').value  = w.role  || '';
+  document.getElementById('f-phone').value = w.phone || '';
+  document.getElementById('f-email').value = w.email || '';
+  document.getElementById('f-note').value  = w.note  || '';
+  Utils.openModal('modal-add');
+}
+
+function clearModal() {
+  editingId = null;
+  document.getElementById('modal-add-title').textContent = 'Přidat pracovníka';
+  ['f-name','f-role','f-phone','f-email','f-note'].forEach(id => document.getElementById(id).value = '');
+}
+
+document.getElementById('modal-add').addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) Utils.closeModal('modal-add');
+});
+
+async function saveWorker() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { Toast.warn('Zadejte jméno pracovníka.'); return; }
+
+  if (editingId) {
+    const w = workers.find(x => x.id === editingId);
+    Object.assign(w, {
+      name, role: document.getElementById('f-role').value.trim(),
+      phone: document.getElementById('f-phone').value.trim(),
+      email: document.getElementById('f-email').value.trim(),
+      note:  document.getElementById('f-note').value.trim(),
+    });
+  } else {
+    workers.push({
+      id: 'w-' + Date.now(),
+      name,
+      role:  document.getElementById('f-role').value.trim(),
+      phone: document.getElementById('f-phone').value.trim(),
+      email: document.getElementById('f-email').value.trim(),
+      note:  document.getElementById('f-note').value.trim(),
+      projectRewards: {},
+    });
+  }
+
+  await STORE.saveWorkers(workers);
+  Utils.closeModal('modal-add');
+  clearModal();
+  Toast.ok('Pracovník uložen ✓');
+  updateKPI();
+  renderGrid();
+}
+
+async function deleteWorker(id) {
+  if (!confirm('Opravdu smazat tohoto pracovníka?')) return;
+  workers = workers.filter(w => w.id !== id);
+  await STORE.saveWorkers(workers);
+  Toast.ok('Pracovník odebrán.');
+  updateKPI();
+  renderGrid();
+}
+
+/* ── ASSIGN PROJECT ── */
+function openAssign(wId) {
+  assigningId = wId;
+  const w = workers.find(x => x.id === wId);
+  const assigned = Object.keys(w.projectRewards || {});
+  const available = projects.filter(p => !assigned.includes(p.id));
+  const sel = document.getElementById('assign-proj');
+  sel.innerHTML = available.length
+    ? available.map(p => `<option value="${p.id}">${p.name}</option>`).join('')
+    : '<option disabled>Všechny projekty již přiřazeny</option>';
+  document.getElementById('assign-amount').value = '';
+  document.getElementById('assign-note').value   = '';
+  Utils.openModal('modal-assign');
+}
+
+async function confirmAssign() {
+  const projId = document.getElementById('assign-proj').value;
+  const amount = parseFloat(document.getElementById('assign-amount').value) || 0;
+  const note   = document.getElementById('assign-note').value.trim();
+  if (!projId) { Toast.warn('Vyberte projekt.'); return; }
+
+  const w = workers.find(x => x.id === assigningId);
+  if (!w.projectRewards) w.projectRewards = {};
+  w.projectRewards[projId] = { amount, note };
+
+  await STORE.saveWorkers(workers);
+  Utils.closeModal('modal-assign');
+  Toast.ok('Projekt přiřazen ✓');
+  updateKPI();
+  renderGrid();
+}
+
+async function updateReward(wId, projId, field, val) {
+  const w = workers.find(x => x.id === wId);
+  if (!w.projectRewards) w.projectRewards = {};
+  if (!w.projectRewards[projId]) w.projectRewards[projId] = { amount: 0, note: '' };
+  w.projectRewards[projId][field] = field === 'amount' ? (parseFloat(val)||0) : val;
+  await STORE.saveWorkers(workers);
+  updateKPI();
+  // Don't re-render — inputs are live
+}
+
+async function removeFromProject(wId, projId) {
+  const w = workers.find(x => x.id === wId);
+  delete w.projectRewards[projId];
+  await STORE.saveWorkers(workers);
+  Toast.ok('Projekt odebrán.');
+  updateKPI();
+  renderGrid();
+}
+
+init();
+</script>
+</body>
+</html>

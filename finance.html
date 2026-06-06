@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanční přehled — PP projekt s.r.o.</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+/* ── CHART AREA ── */
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  box-shadow: var(--sh);
+  margin-bottom: 24px;
+}
+.chart-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-m);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chart-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.chart-wrap { position: relative; height: 240px; }
+
+/* ── PROJECT FINANCE CARDS ── */
+.fin-proj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.fin-proj-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface3);
+  cursor: pointer;
+  user-select: none;
+}
+.fin-proj-header:hover { background: var(--surface2); }
+.fin-proj-title { font-size: 13px; font-weight: 600; flex: 1; }
+.fin-proj-total {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.fin-toggle { font-family: var(--mono); font-size: 11px; color: var(--text-m); }
+.fin-proj-body { padding: 0; }
+.fin-proj-body.collapsed { display: none; }
+
+/* Faktura stav badge */
+.inv-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.inv-planovano { background: var(--surface2); color: var(--text-m); border: 1px solid var(--border); }
+.inv-vystavena { background: var(--warn-lt);  color: var(--warn);  border: 1px solid var(--warn-bd); }
+.inv-zaplaceno { background: var(--ok-lt);    color: var(--ok);    border: 1px solid var(--ok-bd); }
+
+/* Náklady */
+.cost-section {
+  border-top: 1px solid var(--border);
+  background: var(--surface3);
+}
+.cost-header {
+  padding: 8px 16px;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-m);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.fin-total-row td {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface2) !important;
+  border-top: 2px solid var(--border-s) !important;
+}
+
+/* Summary legend */
+.chart-legend {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-m);
+}
+.legend-box {
+  width: 12px; height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<div class="main-wrap">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Finanční přehled</div>
+      <div class="page-subtitle">Faktury, náklady a zisk projektů</div>
+    </div>
+    <div class="page-header-right">
+      <button class="btn" onclick="reloadFin()">↺ Obnovit</button>
+      <button class="btn btn-ok" onclick="saveAll()">💾 Uložit vše</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card kpi-gold">
+        <div class="kpi-label">Obrat celkem</div>
+        <div class="kpi-value" id="kpi-obrat">—</div>
+        <div class="kpi-sub">Součet všech zakázek</div>
+      </div>
+      <div class="kpi-card kpi-accent">
+        <div class="kpi-label">Vyfakturováno</div>
+        <div class="kpi-value" id="kpi-fakturovano">—</div>
+        <div class="kpi-sub">Vystavené faktury</div>
+      </div>
+      <div class="kpi-card kpi-ok">
+        <div class="kpi-label">Zaplaceno</div>
+        <div class="kpi-value" id="kpi-zaplaceno">—</div>
+        <div class="kpi-sub">Přijaté platby</div>
+      </div>
+      <div class="kpi-card kpi-warn">
+        <div class="kpi-label">Náklady celkem</div>
+        <div class="kpi-value" id="kpi-naklady">—</div>
+        <div class="kpi-sub">Odměny + ostatní</div>
+      </div>
+    </div>
+
+    <!-- Zisk KPI (extra) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="kpi-card">
+        <div class="kpi-label">Čistý zisk (zaplaceno − náklady)</div>
+        <div class="kpi-value" id="kpi-zisk" style="font-size:20px">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Marže</div>
+        <div class="kpi-value" id="kpi-marze" style="font-size:20px">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Čeká na zaplacení</div>
+        <div class="kpi-value" id="kpi-ceka" style="font-size:20px">—</div>
+      </div>
+    </div>
+
+    <!-- Graf -->
+    <div class="chart-card">
+      <div class="chart-title">Měsíční přehled fakturace</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-box" style="background:#2a7a4a"></div>Zaplaceno</div>
+        <div class="legend-item"><div class="legend-box" style="background:#0563C1"></div>Vystaveno (nezaplaceno)</div>
+        <div class="legend-item"><div class="legend-box" style="background:#d0d8e4"></div>Plánováno</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="fin-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Per-projekt tabulky -->
+    <div class="section-title">Přehled projektů</div>
+    <div id="proj-finance-list">
+      <div class="loading-state"><div class="spinner"></div> Načítám finanční data…</div>
+    </div>
+  </div>
+
+  <div class="page-footer">PP projekt s.r.o. · Finanční přehled · <span id="footer-year"></span></div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+let projects = [];
+let fin = { projects: {} };
+let workers = [];
+let chart = null;
+let collapsed = {};
+
+async function init() {
+  Sidebar.render('finance');
+  document.getElementById('footer-year').textContent = new Date().getFullYear();
+  await reloadFin();
+}
+
+async function reloadFin() {
+  [projects, fin, workers] = await Promise.all([
+    STORE.getProjects(),
+    STORE.getFinance(),
+    STORE.getWorkers(),
+  ]);
+  if (!fin.projects) fin.projects = {};
+
+  // Inicializace chybějících projektů
+  projects.forEach(p => {
+    if (!fin.projects[p.id]) {
+      fin.projects[p.id] = {
+        price: p.price || 0,
+        invoices: [
+          { id:'inv-1', label:'1. faktura — 25 % (úvodní fáze)',     amount: Math.round((p.price||0)*.25), status:'planovano', date:'', note:'' },
+          { id:'inv-2', label:'2. faktura — 50 % (prostřední fáze)', amount: Math.round((p.price||0)*.50), status:'planovano', date:'', note:'' },
+          { id:'inv-3', label:'3. faktura — 25 % (závěrečná fáze)',  amount: (p.price||0)-Math.round((p.price||0)*.25)-Math.round((p.price||0)*.50), status:'planovano', date:'', note:'' },
+        ],
+        costs: [],
+      };
+    }
+  });
+
+  updateKPI();
+  renderChart();
+  renderProjList();
+}
+
+/* ── KPI ── */
+function updateKPI() {
+  let obrat = 0, fakturovano = 0, zaplaceno = 0, naklady = 0;
+
+  projects.forEach(p => {
+    const fp = fin.projects[p.id];
+    if (!fp) return;
+    (fp.invoices || []).forEach(inv => {
+      const amt = Utils.parseKc(inv.amount);
+      obrat += amt;
+      if (inv.status === 'vystavena') fakturovano += amt;
+      if (inv.status === 'zaplaceno') { fakturovano += amt; zaplaceno += amt; }
+    });
+    (fp.costs || []).forEach(c => { naklady += Utils.parseKc(c.amount); });
+    // Odměny pracovníků
+    workers.forEach(w => {
+      const r = w.projectRewards?.[p.id];
+      if (r) naklady += Utils.parseKc(r.amount);
+    });
+  });
+
+  const zisk  = zaplaceno - naklady;
+  const marze = zaplaceno ? Math.round(zisk / zaplaceno * 100) : 0;
+  const ceka  = fakturovano - zaplaceno;
+
+  document.getElementById('kpi-obrat').textContent       = Utils.formatKc(obrat);
+  document.getElementById('kpi-fakturovano').textContent = Utils.formatKc(fakturovano);
+  document.getElementById('kpi-zaplaceno').textContent   = Utils.formatKc(zaplaceno);
+  document.getElementById('kpi-naklady').textContent     = Utils.formatKc(naklady);
+  document.getElementById('kpi-zisk').textContent        = Utils.formatKc(zisk);
+  document.getElementById('kpi-marze').textContent       = marze + ' %';
+  document.getElementById('kpi-ceka').textContent        = Utils.formatKc(ceka);
+}
+
+/* ── GRAF ── */
+function renderChart() {
+  // Sestavit měsíce (posledních 12 + následující 6)
+  const months = [];
+  const now = new Date();
+  for (let i = -6; i <= 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,
+      label: d.toLocaleDateString('cs-CZ', { month:'short', year:'2-digit' }),
+      zaplaceno: 0, vystavena: 0, planovano: 0,
+    });
+  }
+
+  projects.forEach(p => {
+    const fp = fin.projects[p.id];
+    if (!fp) return;
+    (fp.invoices || []).forEach(inv => {
+      const amt  = Utils.parseKc(inv.amount);
+      const mkey = (inv.date || '').slice(0, 7);
+      const m = months.find(x => x.key === mkey);
+      if (!m) return;
+      if (inv.status === 'zaplaceno') m.zaplaceno += amt;
+      else if (inv.status === 'vystavena') m.vystavena += amt;
+      else m.planovano += amt;
+    });
+  });
+
+  const ctx = document.getElementById('fin-chart').getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(m => m.label),
+      datasets: [
+        { label: 'Zaplaceno',  data: months.map(m => m.zaplaceno), backgroundColor: '#2a7a4a', borderRadius: 3 },
+        { label: 'Vystaveno',  data: months.map(m => m.vystavena), backgroundColor: '#0563C1', borderRadius: 3 },
+        { label: 'Plánováno', data: months.map(m => m.planovano), backgroundColor: '#d0d8e4', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${Utils.formatKc(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { family: 'IBM Plex Mono', size: 10 }, color: '#7a7268' } },
+        y: { stacked: true, grid: { color: '#e8e4de' }, ticks: { font: { family: 'IBM Plex Mono', size: 10 }, color: '#7a7268', callback: v => Utils.formatKc(v) } },
+      }
+    }
+  });
+}
+
+/* ── PER-PROJECT LIST ── */
+function renderProjList() {
+  const el = document.getElementById('proj-finance-list');
+  if (!projects.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💰</div>Žádné projekty</div>';
+    return;
+  }
+
+  el.innerHTML = projects.map(p => renderProjFinCard(p)).join('');
+}
+
+function renderProjFinCard(p) {
+  const fp = fin.projects[p.id] || { invoices: [], costs: [] };
+  const isCollapsed = collapsed[p.id];
+
+  let totalInv = 0, totalCost = 0;
+  (fp.invoices || []).forEach(inv => totalInv  += Utils.parseKc(inv.amount));
+  (fp.costs    || []).forEach(c   => totalCost += Utils.parseKc(c.amount));
+
+  // Odměny z pracovníků
+  let workerCost = 0;
+  workers.forEach(w => { const r = w.projectRewards?.[p.id]; if (r) workerCost += Utils.parseKc(r.amount); });
+  totalCost += workerCost;
+
+  const zisk = totalInv - totalCost;
+
+  return `<div class="fin-proj-card" id="fpc-${p.id}">
+    <div class="fin-proj-header" onclick="toggleProjFin('${p.id}')">
+      <div class="color-bar" style="background:${p.color}"></div>
+      <div class="fin-proj-title">${p.name}</div>
+      <span class="fin-proj-total">${Utils.formatKc(totalInv)}</span>
+      <span class="mono text-m" style="font-size:11px">Náklady: ${Utils.formatKc(totalCost)}</span>
+      <span class="mono ${zisk>=0?'text-ok':'text-warn'}" style="font-size:11px">Zisk: ${Utils.formatKc(zisk)}</span>
+      <span class="fin-toggle">${isCollapsed ? '▶' : '▼'}</span>
+    </div>
+    <div class="fin-proj-body${isCollapsed?' collapsed':''}" id="fpb-${p.id}">
+      <!-- FAKTURY -->
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Faktura</th>
+            <th style="width:160px;text-align:right">Částka (Kč bez DPH)</th>
+            <th style="width:120px">Stav</th>
+            <th style="width:130px">Datum</th>
+            <th style="width:200px">Poznámka</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="inv-tbody-${p.id}">
+          ${(fp.invoices||[]).map((inv,i) => renderInvRow(p.id, inv, i)).join('')}
+        </tbody>
+        <tfoot>
+          <tr class="fin-total-row">
+            <td><strong>Celkem faktury</strong></td>
+            <td style="text-align:right"><strong>${Utils.formatKc(totalInv)}</strong></td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- NÁKLADY -->
+      <div class="cost-section">
+        <div class="cost-header">
+          Náklady projektu
+          <button class="btn btn-sm" onclick="addCost('${p.id}')">+ Přidat náklad</button>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Popis nákladu</th>
+              <th style="width:160px;text-align:right">Částka</th>
+              <th style="width:120px">Kategorie</th>
+              <th style="width:130px">Datum</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="cost-tbody-${p.id}">
+            ${workers.filter(w => w.projectRewards?.[p.id]?.amount)
+              .map(w => `<tr>
+                <td>Odměna: ${w.name}</td>
+                <td class="text-right mono" style="text-align:right">${Utils.formatKc(w.projectRewards[p.id].amount)}</td>
+                <td><span class="chip">Mzdy</span></td>
+                <td class="text-m mono" style="font-size:10px">—</td>
+                <td></td>
+              </tr>`).join('')}
+            ${(fp.costs||[]).map((c,i) => renderCostRow(p.id, c, i)).join('')}
+            ${(!fp.costs?.length && !workers.some(w=>w.projectRewards?.[p.id]?.amount))
+              ? '<tr><td colspan="5" class="text-center text-m mono" style="padding:16px;font-size:11px">Žádné náklady</td></tr>' : ''}
+          </tbody>
+          <tfoot>
+            <tr class="fin-total-row">
+              <td><strong>Celkem náklady</strong></td>
+              <td style="text-align:right"><strong>${Utils.formatKc(totalCost)}</strong></td>
+              <td colspan="3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderInvRow(projId, inv, idx) {
+  const bc = { planovano:'inv-planovano', vystavena:'inv-vystavena', zaplaceno:'inv-zaplaceno' }[inv.status] || 'inv-planovano';
+  return `<tr>
+    <td>${inv.label}</td>
+    <td style="text-align:right">
+      <input class="inline-input" style="text-align:right;width:130px" value="${inv.amount}"
+        onchange="updateInv('${projId}',${idx},'amount',this.value)">
+    </td>
+    <td>
+      <select class="form-select" style="font-size:10px;padding:3px 6px"
+        onchange="updateInv('${projId}',${idx},'status',this.value);renderProjList();">
+        <option value="planovano" ${inv.status==='planovano'?'selected':''}>Plánováno</option>
+        <option value="vystavena" ${inv.status==='vystavena'?'selected':''}>Vystavena</option>
+        <option value="zaplaceno" ${inv.status==='zaplaceno'?'selected':''}>Zaplaceno</option>
+      </select>
+    </td>
+    <td>
+      <input class="inline-input" type="date" value="${inv.date||''}"
+        onchange="updateInv('${projId}',${idx},'date',this.value)">
+    </td>
+    <td>
+      <input class="inline-input" value="${inv.note||''}" placeholder="Poznámka…"
+        onchange="updateInv('${projId}',${idx},'note',this.value)">
+    </td>
+    <td></td>
+  </tr>`;
+}
+
+function renderCostRow(projId, c, idx) {
+  return `<tr>
+    <td><input class="inline-input" value="${c.desc||''}" placeholder="Popis nákladu…"
+      onchange="updateCost('${projId}',${idx},'desc',this.value)"></td>
+    <td style="text-align:right"><input class="inline-input" style="text-align:right;width:130px"
+      value="${c.amount||''}" onchange="updateCost('${projId}',${idx},'amount',this.value)"></td>
+    <td>
+      <select class="form-select" style="font-size:10px;padding:3px 6px"
+        onchange="updateCost('${projId}',${idx},'cat',this.value)">
+        <option value="ostatni" ${c.cat==='ostatni'?'selected':''}>Ostatní</option>
+        <option value="material" ${c.cat==='material'?'selected':''}>Materiál</option>
+        <option value="sluzby"   ${c.cat==='sluzby'?'selected':''}>Služby</option>
+        <option value="cestovne" ${c.cat==='cestovne'?'selected':''}>Cestovné</option>
+      </select>
+    </td>
+    <td><input class="inline-input" type="date" value="${c.date||''}"
+      onchange="updateCost('${projId}',${idx},'date',this.value)"></td>
+    <td><button class="btn btn-sm btn-danger" onclick="deleteCost('${projId}',${idx})">✕</button></td>
+  </tr>`;
+}
+
+/* ── ACTIONS ── */
+function toggleProjFin(id) {
+  collapsed[id] = !collapsed[id];
+  renderProjList();
+}
+
+function updateInv(projId, idx, field, val) {
+  fin.projects[projId].invoices[idx][field] = val;
+  updateKPI();
+  renderChart();
+}
+
+function updateCost(projId, idx, field, val) {
+  fin.projects[projId].costs[idx][field] = val;
+  updateKPI();
+}
+
+function addCost(projId) {
+  if (!fin.projects[projId].costs) fin.projects[projId].costs = [];
+  fin.projects[projId].costs.push({ desc:'', amount:0, cat:'ostatni', date:'' });
+  renderProjList();
+}
+
+function deleteCost(projId, idx) {
+  fin.projects[projId].costs.splice(idx, 1);
+  renderProjList();
+  updateKPI();
+}
+
+async function saveAll() {
+  await STORE.saveFinance(fin);
+  Toast.ok('Finance uloženy ✓');
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Návod k nasazení — PP projekt s.r.o.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:  #0563C1;
+    --ok:      #2a7a4a;
+    --warn:    #9a6000;
+    --bg:      #f4f1eb;
+    --surface: #ffffff;
+    --border:  #dbd6cc;
+    --text:    #1a1814;
+    --text-m:  #6b6359;
+    --mono:    'IBM Plex Mono', monospace;
+    --sans:    'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; }
+  a { color: var(--accent); }
+
+  /* LAYOUT */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #1a1f2e; color: #c8c0b8;
+    display: flex; align-items: center; gap: 24px;
+    padding: 0 32px; height: 52px;
+    font-family: var(--mono); font-size: 11px;
+    border-bottom: 1px solid #2d3447;
+  }
+  .nav-logo { color: #fff; font-weight: 700; letter-spacing: 1px; }
+  .nav a { color: #c8c0b8; text-decoration: none; }
+  .nav a:hover { color: #fff; }
+  .nav-spacer { flex: 1; }
+
+  .layout { display: flex; min-height: calc(100vh - 52px); }
+
+  /* SIDEBAR TOC */
+  .toc {
+    width: 260px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    position: sticky; top: 52px;
+    height: calc(100vh - 52px);
+    overflow-y: auto;
+  }
+  .toc-section { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-m); margin: 20px 0 8px; }
+  .toc-section:first-child { margin-top: 0; }
+  .toc a {
+    display: block; padding: 4px 8px; border-radius: 3px;
+    color: var(--text-m); text-decoration: none; font-size: 13px;
+    transition: background .1s;
+  }
+  .toc a:hover { background: var(--bg); color: var(--text); }
+  .toc a.active { background: var(--accent); color: #fff; }
+
+  /* CONTENT */
+  .content { flex: 1; padding: 40px 48px; max-width: 900px; }
+
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 700; margin: 40px 0 12px; padding-top: 8px; border-top: 2px solid var(--border); }
+  h3 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; }
+  p  { margin-bottom: 12px; }
+  ul, ol { margin: 10px 0 14px 22px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 600; }
+
+  /* STEP BOX */
+  .step {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .step-num {
+    width: 32px; height: 32px;
+    background: var(--accent); color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    flex-shrink: 0; margin-top: 2px;
+  }
+  .step-body { flex: 1; }
+  .step-body h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .step-body p  { font-size: 13px; margin-bottom: 6px; }
+
+  /* CODE */
+  pre, code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #1a1f2e;
+    color: #c8f0c0;
+    border-radius: 4px;
+  }
+  code { padding: 2px 6px; }
+  pre  { padding: 16px 20px; overflow-x: auto; margin: 12px 0 16px; line-height: 1.6; }
+  pre .comment { color: #6a7a8a; }
+  pre .key     { color: #8be0f8; }
+  pre .val     { color: #f7c873; }
+
+  /* CALLOUT */
+  .callout {
+    border-radius: 4px; padding: 12px 16px; margin: 14px 0;
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; border-left: 3px solid;
+  }
+  .callout-info  { background: #e8f0fb; border-color: var(--accent); }
+  .callout-warn  { background: #fef5e6; border-color: var(--warn); }
+  .callout-ok    { background: #eafaf1; border-color: var(--ok); }
+  .callout-icon  { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  th { background: #1a1f2e; color: #c8c0b8; font-family: var(--mono); font-size: 11px; font-weight: 500; padding: 8px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: var(--bg); }
+
+  /* URL TAG */
+  .url-tag {
+    display: inline-block;
+    font-family: var(--mono); font-size: 11px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 3px; padding: 2px 8px; margin: 2px 0;
+    word-break: break-all;
+  }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 2px; font-weight: 600;
+  }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-green  { background: #d1fae5; color: #065f46; }
+  .badge-orange { background: #ffedd5; color: #9a3412; }
+
+  /* DONE CHECK */
+  .done-list { list-style: none; margin: 10px 0; padding: 0; }
+  .done-list li { padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
+  .done-list li::before { content: '☐'; font-size: 16px; flex-shrink: 0; }
+  .done-list li:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-logo">PP PROJEKT</span>
+  <span>·</span>
+  <span>Návod k nasazení systému</span>
+  <div class="nav-spacer"></div>
+  <a href="index.html">← Zpět do systému</a>
+</nav>
+
+<div class="layout">
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="toc-section">Přehled</div>
+    <a href="#uvod">Co je tento systém?</a>
+    <a href="#pozadavky">Co budete potřebovat</a>
+    <a href="#architektura">Jak to funguje</a>
+
+    <div class="toc-section">Krok 1 · Google Sheets</div>
+    <a href="#sheets-vytvorit">Vytvoření tabulky</a>
+    <a href="#sheets-listy">Pojmenování listů</a>
+
+    <div class="toc-section">Krok 2 · Apps Script</div>
+    <a href="#gs-otevrit">Otevřít editor</a>
+    <a href="#gs-kod">Vložit kód</a>
+    <a href="#gs-nasadit">Nasadit webovou aplikaci</a>
+    <a href="#gs-url">Zkopírovat URL</a>
+    <a href="#gs-vložit">Vložit URL do systému</a>
+
+    <div class="toc-section">Krok 3 · GitHub Pages</div>
+    <a href="#gh-repo">Vytvořit repozitář</a>
+    <a href="#gh-upload">Nahrát soubory</a>
+    <a href="#gh-pages">Zapnout GitHub Pages</a>
+    <a href="#gh-odkaz">Váš odkaz</a>
+
+    <div class="toc-section">Krok 4 · První spuštění</div>
+    <a href="#first-run">Spuštění systému</a>
+    <a href="#first-worker">Přidat pracovníka</a>
+    <a href="#first-project">Vytvořit projekt</a>
+
+    <div class="toc-section">Řešení problémů</div>
+    <a href="#troubleshoot">Časté dotazy</a>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <h1 id="uvod">Návod k nasazení systému</h1>
+    <p>Tento průvodce vás provede celým procesem nastavení systému PP projekt pro řízení projektových zakázek. Nevyžaduje žádné technické znalosti — stačí pečlivě sledovat kroky v pořadí.</p>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">⏱</span>
+      <div>Celé nastavení zabere přibližně <strong>20–30 minut</strong>. Doporučujeme mít po ruce počítač a přihlášený Google účet.</div>
+    </div>
+
+    <!-- ─────────────────────────────── -->
+    <h2 id="pozadavky">Co budete potřebovat</h2>
+    <ul>
+      <li><strong>Google účet</strong> — pro Google Sheets a Apps Script (zdarma)</li>
+      <li><strong>GitHub účet</strong> — pro hostování webu (zdarma, na <a href="https://github.com" target="_blank">github.com</a>)</li>
+      <li><strong>Soubory systému</strong> — složka, kterou jste dostali (<code>assets/</code>, <code>index.html</code>, atd.)</li>
+    </ul>
+
+    <!-- ─────────────────────────────── -->
+    <h2 id="architektura">Jak to funguje</h2>
+    <table>
+      <thead><tr><th>Součást</th><th>Role</th><th>Kde běží</th></tr></thead>
+      <tbody>
+        <tr><td>Soubory HTML/CSS/JS</td><td>Vizuální rozhraní systému</td><td>GitHub Pages (zdarma)</td></tr>
+        <tr><td>Google Sheets</td><td>Databáze (ukládání projektů, pracovníků…)</td><td>Váš Google Drive</td></tr>
+        <tr><td>Google Apps Script</td><td>API — přijímá a posílá data</td><td>Google servery (zdarma)</td></tr>
+        <tr><td>localStorage</td><td>Záloha v prohlížeči (funguje i bez internetu)</td><td>Váš prohlížeč</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ═══════════════════════════════ -->
+    <h2>KROK 1 — Google Sheets (databáze)</h2>
+
+    <h3 id="sheets-vytvorit">Vytvořte novou tabulku</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <h4>Otevřete Google Sheets</h4>
+      <p>Přejděte na <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> a klikněte na velké <strong>+</strong> (Prázdná tabulka).</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <h4>Přejmenujte tabulku</h4>
+      <p>V levém horním rohu klikněte na text <em>„Tabulka bez názvu"</em> a zadejte například: <strong>PP projekt — databáze</strong></p>
+    </div></div>
+
+    <h3 id="sheets-listy">Pojmenujte listy (záložky)</h3>
+    <p>Systém potřebuje tyto pojmenované listy. Klikněte pravým tlačítkem na záložku <strong>List1</strong> dole a přejmenujte ji. Pak přidejte další listy tlačítkem <strong>+</strong>.</p>
+
+    <table>
+      <thead><tr><th>Název listu</th><th>Co obsahuje</th></tr></thead>
+      <tbody>
+        <tr><td><code>config</code></td><td>Obecná konfigurace aplikace</td></tr>
+        <tr><td><code>projects</code></td><td>Seznam všech projektů</td></tr>
+        <tr><td><code>workers</code></td><td>Evidence pracovníků a jejich odměn</td></tr>
+        <tr><td><code>finance</code></td><td>Fakturační a nákladová data</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠️</span>
+      <div>Názvy listů musí být <strong>přesně takové</strong> — malá písmena, bez diakritiky, bez mezer. Jinak systém data nenajde.</div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ️</span>
+      <div>Listy pro checklisty projektů (<code>tasks_PROJEKTID</code>) si systém vytváří sám při prvním uložení checklistu — nemusíte je vytvářet ručně.</div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <h2>KROK 2 — Google Apps Script (API)</h2>
+
+    <h3 id="gs-otevrit">Otevřete editor skriptů</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <h4>V Google Sheets klikněte na menu „Rozšíření"</h4>
+      <p>Vyberte <strong>Rozšíření → Apps Script</strong>. Otevře se nová záložka s editorem kódu.</p>
+    </div></div>
+
+    <h3 id="gs-kod">Vložte kód</h3>
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <h4>Smažte veškerý existující kód</h4>
+      <p>V editoru uvidíte prázdnou funkci. Označte vše (<kbd>Ctrl+A</kbd>) a smažte.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <h4>Zkopírujte kód ze souboru <code>setup/Code.gs</code></h4>
+      <p>Otevřete soubor <code>setup/Code.gs</code>, zkopírujte celý jeho obsah a vložte ho do editoru Apps Script (<kbd>Ctrl+V</kbd>).</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div class="step-body">
+      <h4>Uložte projekt</h4>
+      <p>Klikněte na ikonu diskety (💾) nebo stiskněte <kbd>Ctrl+S</kbd>. Pojmenujte projekt například <strong>PP projekt API</strong>.</p>
+    </div></div>
+
+    <h3 id="gs-nasadit">Nasaďte jako webovou aplikaci</h3>
+    <div class="step"><div class="step-num">5</div><div class="step-body">
+      <h4>Klikněte na tlačítko „Nasadit"</h4>
+      <p>V pravém horním rohu klikněte na <strong>Nasadit → Nové nasazení</strong>.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">6</div><div class="step-body">
+      <h4>Nastavte parametry nasazení</h4>
+      <p>Klikněte na ikonu ozubeného kola vedle „Vybrat typ" a zvolte <strong>Webová aplikace</strong>. Pak nastavte:</p>
+      <ul>
+        <li><strong>Spustit jako:</strong> Já (váš Google účet)</li>
+        <li><strong>Kdo má přístup:</strong> Kdokoli</li>
+      </ul>
+    </div></div>
+
+    <div class="step"><div class="step-num">7</div><div class="step-body">
+      <h4>Klikněte na „Nasadit"</h4>
+      <p>Google vás možná požádá o povolení přístupu ke Spreadsheet. Klikněte na <strong>Autorizovat přístup</strong>, vyberte svůj Google účet a potvrďte (ikona „Upřesnit → přejít na PP projekt API").</p>
+    </div></div>
+
+    <h3 id="gs-url">Zkopírujte URL webové aplikace</h3>
+    <div class="step"><div class="step-num">8</div><div class="step-body">
+      <h4>Zkopírujte URL</h4>
+      <p>Po nasazení se zobrazí okno s <strong>URL webové aplikace</strong>. Vypadá přibližně takto:</p>
+      <div class="url-tag">https://script.google.com/macros/s/AKfycby…ABCDEF/exec</div>
+      <p>Zkopírujte ji celou — budete ji potřebovat v dalším kroku.</p>
+    </div></div>
+
+    <h3 id="gs-vložit">Vložte URL do systému</h3>
+    <div class="step"><div class="step-num">9</div><div class="step-body">
+      <h4>Otevřete soubor <code>assets/app.js</code></h4>
+      <p>Najděte řádek začínající <code>APP_SCRIPT_URL:</code> (je hned na začátku souboru) a vložte tam vaši URL:</p>
+      <pre><span class="comment">// Nahraďte tento řetězec svou URL:</span>
+<span class="key">APP_SCRIPT_URL</span>: <span class="val">'https://script.google.com/macros/s/VAŠE-URL/exec'</span>,</pre>
+      <p>Soubor uložte.</p>
+    </div></div>
+
+    <div class="callout callout-ok">
+      <span class="callout-icon">✅</span>
+      <div>Teď máte funkční databázi. Google Sheets bude automaticky ukládat všechna data z vašeho projektového systému.</div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <h2>KROK 3 — GitHub Pages (hostování webu)</h2>
+
+    <h3 id="gh-repo">Vytvořte repozitář</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <h4>Přejděte na <a href="https://github.com" target="_blank">github.com</a> a přihlaste se</h4>
+      <p>Pokud nemáte účet, zaregistrujte se zdarma.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <h4>Vytvořte nový repozitář</h4>
+      <p>Klikněte na zelené tlačítko <strong>New</strong> nebo na <strong>+ → New repository</strong>. Nastavte:</p>
+      <ul>
+        <li><strong>Repository name:</strong> <code>pp-projekt</code> (nebo libovolný název bez mezer)</li>
+        <li><strong>Visibility:</strong> Public (nutné pro bezplatné GitHub Pages)</li>
+        <li>Nezaškrtávejte nic dalšího</li>
+      </ul>
+      <p>Klikněte na <strong>Create repository</strong>.</p>
+    </div></div>
+
+    <h3 id="gh-upload">Nahrajte soubory</h3>
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <h4>Nahrajte soubory systému</h4>
+      <p>Na stránce vašeho nového repozitáře klikněte na <strong>uploading an existing file</strong> (nebo <strong>Add file → Upload files</strong>). Nahrajte <strong>celou složku</strong> se systémem — tedy všechny soubory i podsložky (<code>assets/</code>, <code>setup/</code>).</p>
+      <div class="callout callout-warn" style="margin-top:10px">
+        <span class="callout-icon">⚠️</span>
+        <div>GitHub neumí nahrát celou složku jedním kliknutím. Musíte přetáhnout obsah složky (ne složku samotnou) do okna prohlížeče, nebo nahrávat soubor po souboru, přičemž podsložky musíte vytvořit ručně tlačítkem „Create new file" a zadat cestu <code>assets/style.css</code> apod.</div>
+      </div>
+    </div></div>
+
+    <div class="step"><div class="step-num">4</div><div class="step-body">
+      <h4>Potvrďte nahrání</h4>
+      <p>Dole klikněte na <strong>Commit changes</strong> (zelené tlačítko). Soubory se uloží.</p>
+    </div></div>
+
+    <h3 id="gh-pages">Zapněte GitHub Pages</h3>
+    <div class="step"><div class="step-num">5</div><div class="step-body">
+      <h4>Přejděte do nastavení repozitáře</h4>
+      <p>Klikněte na záložku <strong>Settings</strong> (nahoře v repozitáři).</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">6</div><div class="step-body">
+      <h4>Najděte sekci Pages</h4>
+      <p>V levém menu klikněte na <strong>Pages</strong>.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">7</div><div class="step-body">
+      <h4>Nastavte zdroj</h4>
+      <p>V části <strong>Source</strong> nastavte:</p>
+      <ul>
+        <li><strong>Deploy from a branch</strong></li>
+        <li><strong>Branch:</strong> main, / (root)</li>
+      </ul>
+      <p>Klikněte na <strong>Save</strong>.</p>
+    </div></div>
+
+    <h3 id="gh-odkaz">Váš odkaz na systém</h3>
+    <div class="step"><div class="step-num">8</div><div class="step-body">
+      <h4>Počkejte na nasazení (1–2 minuty)</h4>
+      <p>Po chvíli se na stránce Settings → Pages zobrazí odkaz ve formátu:</p>
+      <div class="url-tag">https://VÁŠE-UŽIVATELSKÉ-JMÉNO.github.io/pp-projekt/</div>
+      <p>Tento odkaz je adresa vašeho systému. Můžete ho sdílet s kýmkoli, komu chcete dát přístup.</p>
+    </div></div>
+
+    <!-- ═══════════════════════════════ -->
+    <h2>KROK 4 — První spuštění</h2>
+
+    <h3 id="first-run">Otevřete systém</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-body">
+      <h4>Otevřete váš odkaz v prohlížeči</h4>
+      <p>Přejděte na adresu <code>https://UŽIVATEL.github.io/pp-projekt/</code>. Měl by se zobrazit dashboard s prázdnou obrazovkou.</p>
+    </div></div>
+
+    <div class="step"><div class="step-num">2</div><div class="step-body">
+      <h4>Zkontrolujte funkčnost</h4>
+      <p>Otevřete vývojářské nástroje prohlížeče (<kbd>F12</kbd>) a přejděte na záložku <strong>Console</strong>. Neměly by tam být žádné červené chyby s textem „Failed to fetch" nebo „Error".</p>
+      <p>Pokud chyby jsou, zkontrolujte, že jste správně zadali URL Apps Script v souboru <code>assets/app.js</code>.</p>
+    </div></div>
+
+    <h3 id="first-worker">Přidejte prvního pracovníka</h3>
+    <div class="step"><div class="step-num">3</div><div class="step-body">
+      <h4>Přejděte na stránku Pracovníci</h4>
+      <p>V levém menu klikněte na <strong>Pracovníci</strong> a přidejte sebe nebo členy týmu tlačítkem <strong>+ Přidat pracovníka</strong>.</p>
+    </div></div>
+
+    <h3 id="first-project">Vytvořte první projekt</h3>
+    <div class="step"><div class="step-num">4</div><div class="step-body">
+      <h4>Na Dashboardu klikněte na „+ Nová zakázka"</h4>
+      <p>Průvodce vás provede 4 kroky:</p>
+      <ol>
+        <li><strong>Základní info</strong> — název, číslo zakázky, adresa, klient, HIP</li>
+        <li><strong>Tým</strong> — vyberte pracovníky z vaší evidence</li>
+        <li><strong>Fáze</strong> — zaškrtněte fáze, které bude projekt obsahovat</li>
+        <li><strong>Finance</strong> — zadejte smluvní cenu → systém automaticky vypočítá 3 faktury</li>
+      </ol>
+    </div></div>
+
+    <!-- ═══════════════════════════════ -->
+    <h2 id="troubleshoot">Řešení problémů</h2>
+
+    <h3>Systém nefunguje / data se neukládají</h3>
+    <ol>
+      <li>Zkontrolujte, že <code>APP_SCRIPT_URL</code> v <code>assets/app.js</code> je správná URL (musí začínat <code>https://script.google.com/macros/s/</code> a končit <code>/exec</code>)</li>
+      <li>Zkontrolujte, že Apps Script je nasazeno s nastavením <strong>„Kdo má přístup: Kdokoli"</strong></li>
+      <li>Systém automaticky ukládá do localStorage v prohlížeči — data tedy neztrácíte, i když API nefunguje</li>
+    </ol>
+
+    <h3>Po změně kódu v Apps Script se nic nezměnilo</h3>
+    <p>Každou změnu kódu je nutné nasadit jako <strong>nové nasazení</strong> (ne opakovat staré). Pak zkopírujte novou URL a aktualizujte ji v <code>app.js</code>.</p>
+
+    <h3>Stránky na GitHubu se neaktualizovaly</h3>
+    <p>GitHub Pages má cache — po nahrání nové verze souborů počkejte 1–3 minuty a pak stránku obnovte s <kbd>Ctrl+Shift+R</kbd> (tvrdé načtení).</p>
+
+    <h3>Checklist projektu je prázdný</h3>
+    <p>Checklist se generuje automaticky z fází, které jste vybrali při vytváření projektu. Pokud jste projektu nepřiřadili žádné fáze, checklist bude prázdný. V takovém případě otevřete projekt na dashboardu a fáze přidejte (funkce bude přidána v budoucí verzi — prozatím projekt smažte a vytvořte znovu).</p>
+
+    <h3>Jak sdílet checklist s pracovníkem?</h3>
+    <p>Na dashboardu na kartě projektu klikněte na odkaz <strong>Checklist</strong> — zkopírujte URL z adresního řádku prohlížeče a pošlete ji pracovníkovi. Odkaz obsahuje ID projektu a přivede ho přímo na daný checklist.</p>
+
+    <!-- CHECKLIST -->
+    <h2>Kontrolní seznam před spuštěním</h2>
+    <ul class="done-list">
+      <li>Google Sheets tabulka vytvořena se 4 listy (config, projects, workers, finance)</li>
+      <li>Apps Script kód vložen a uložen</li>
+      <li>Apps Script nasazen jako webová aplikace (přístup: Kdokoli)</li>
+      <li>URL webové aplikace zkopírována do <code>assets/app.js</code></li>
+      <li>Soubory systému nahrány na GitHub</li>
+      <li>GitHub Pages zapnuty, web dostupný na URL</li>
+      <li>První pracovník přidán do systému</li>
+      <li>První projekt vytvořen</li>
+    </ul>
+
+    <div class="callout callout-ok" style="margin-top:32px">
+      <span class="callout-icon">🎉</span>
+      <div><strong>Systém je připraven!</strong> V případě dotazů nebo problémů kontaktujte vývojáře.</div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Highlight active TOC link on scroll
+const headings = document.querySelectorAll('h2[id], h3[id]');
+const links = document.querySelectorAll('.toc a');
+
+function updateTOC() {
+  let current = '';
+  headings.forEach(h => { if (h.getBoundingClientRect().top < 120) current = h.id; });
+  links.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+}
+window.addEventListener('scroll', updateTOC, { passive: true });
+updateTOC();
+</script>
+</body>
+</html>

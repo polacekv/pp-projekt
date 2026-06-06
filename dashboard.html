@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Projektové řízení</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #e0dbd2;
+  --border-strong: #c8c2b8;
+  --text: #1c1a17;
+  --text-muted: #8a8278;
+  --text-light: #b5b0a8;
+  --accent: #1e4d7b;
+  --accent2: #2d7a4f;
+  --accent3: #8a3a1e;
+  --gold: #c49a2a;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--text);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  border-bottom: 2px solid var(--accent);
+}
+.app-logo {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #8a9aaa;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.app-logo-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: inline-block;
+}
+.app-title {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0ede8;
+  letter-spacing: 0;
+}
+.app-meta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #5a6a7a;
+  letter-spacing: 1px;
+}
+
+/* ── SUMMARY BAR ── */
+.summary-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.summary-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--mono);
+  line-height: 1;
+}
+.summary-lbl {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+.summary-divider { width: 1px; height: 36px; background: var(--border); }
+.summary-bar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.btn-add {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 16px;
+  border-radius: 3px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: background .15s;
+  letter-spacing: .5px;
+}
+.btn-add:hover { background: #163d62; }
+.btn-sec {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-sec:hover { border-color: var(--border-strong); color: var(--text); }
+
+/* ── MAIN ── */
+main {
+  padding: 24px 32px;
+  max-width: 100%;
+}
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── PROJECT GRID ── */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(540px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+/* ── PROJECT CARD ── */
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+}
+.project-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.card-color-bar {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.card-header-info { flex: 1; }
+.card-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.card-name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+.card-address {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-family: var(--mono);
+}
+.card-link {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid #c0d8ee;
+  border-radius: 3px;
+  background: #eaf2fa;
+  white-space: nowrap;
+  transition: background .15s;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.card-link:hover { background: #d4e8f5; }
+
+/* ── CARD BODY ── */
+.card-body {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 0;
+}
+
+/* DONUT */
+.card-donut-wrap {
+  padding: 16px 12px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+}
+.donut-container { position: relative; width: 110px; height: 110px; }
+.donut-svg { width: 110px; height: 110px; transform: rotate(-90deg); }
+.donut-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+.donut-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+.donut-pct {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--mono);
+  line-height: 1;
+}
+.donut-sub {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.legend-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* CARD RIGHT */
+.card-right { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+/* PHASES */
+.phases-list { display: flex; flex-direction: column; gap: 5px; }
+.phase-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.phase-num {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 20px;
+  flex-shrink: 0;
+}
+.phase-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phase-bar-outer {
+  width: 80px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.phase-bar-inner {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .6s ease;
+}
+.phase-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* TEAM */
+.team-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.team-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 2px;
+}
+.team-chip {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* LAST ACTIVITY */
+.last-activity {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.activity-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent2);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.activity-text { line-height: 1.4; }
+.activity-time {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-light);
+  display: block;
+  margin-top: 1px;
+}
+
+/* LOADING */
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 20px;
+}
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── FINANCIAL SECTION ── */
+.financial-section { margin-top: 8px; }
+.fin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+  gap: 20px;
+}
+.fin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+}
+.fin-card-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface2);
+  flex-shrink: 0;
+}
+.fin-card-title { font-weight: 600; font-size: 13px; flex: 1; }
+.fin-card-tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.fin-table-wrap { flex: 1; }
+.fin-table { width: 100%; border-collapse: collapse; }
+.fin-table th {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: #faf8f4;
+  font-weight: 500;
+}
+.fin-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  vertical-align: middle;
+}
+.fin-table tr:last-child td { border-bottom: none; }
+.fin-table tr:hover td { background: var(--surface2); }
+.fin-row-planovano { background: #fdf0f0; }
+.fin-row-planovano:hover td { background: #fae8e8 !important; }
+.fin-row-faktura { background: #eaf2fa; }
+.fin-row-faktura:hover td { background: #d8eaf6 !important; }
+.fin-row-zaplaceno { background: #e8f5ed; }
+.fin-row-zaplaceno:hover td { background: #d4eddb !important; }
+
+.fin-empty td {
+  text-align: center;
+  color: var(--text-light);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 28px 14px;
+  font-style: italic;
+}
+.fin-input {
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  background: transparent;
+  color: var(--text);
+  width: 100%;
+  transition: border .15s, background .15s;
+}
+.fin-input:hover { border-color: var(--border); background: var(--surface2); }
+.fin-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: var(--surface); }
+.fin-input::placeholder { color: var(--text-light); }
+.fin-amount {
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: right;
+}
+.fin-amount input {
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 3px 6px;
+  background: transparent;
+  color: var(--text);
+  width: 100px;
+  text-align: right;
+  transition: border .15s, background .15s;
+}
+.fin-amount input:hover { border-color: var(--border); background: var(--surface2); }
+.fin-amount input:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: var(--surface); }
+.fin-status-sel {
+  font-family: var(--mono);
+  font-size: 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+.fin-total-row td {
+  font-weight: 600;
+  background: var(--surface2);
+  border-top: 2px solid var(--border-strong) !important;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.fin-footer {
+  padding: 8px 14px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.fin-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.fin-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border-strong); }
+.fin-btn-save {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.fin-btn-save:hover { background: #163d62; }
+
+/* Status chips */
+.chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  letter-spacing: .3px;
+}
+.chip-0 { background: #f0ede6; color: var(--text-muted); border: 1px solid var(--border); }
+.chip-zaplaceno { background: #e8f5ed; color: #2a7a4a; border: 1px solid #b8dfc8; }
+.chip-faktura { background: #fdf0e6; color: #b05c1a; border: 1px solid #e8c4a0; }
+.chip-planovano { background: #eaf2fa; color: var(--accent); border: 1px solid #c0d8ee; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 10px 18px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity .3s;
+  z-index: 2000;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ADD PROJECT MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(28,26,23,.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 28px;
+  width: min(500px, 95vw);
+  box-shadow: var(--shadow-lg);
+}
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+.form-row { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.form-input {
+  font-family: var(--sans);
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 10px;
+  background: var(--surface);
+  color: var(--text);
+  width: 100%;
+}
+.form-input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-light);
+  border-top: 1px solid var(--border);
+  margin-top: 24px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-logo">
+    <span class="app-logo-dot"></span>
+    <span>Projektové řízení staveb</span>
+  </div>
+  <div class="app-title">Dashboard</div>
+  <div class="app-meta" id="last-updated">Načítám data…</div>
+</div>
+
+<div class="summary-bar">
+  <div class="summary-stat">
+    <div class="summary-val" id="s-projects">—</div>
+    <div class="summary-lbl">Projektů celkem</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-stat">
+    <div class="summary-val" id="s-tasks">—</div>
+    <div class="summary-lbl">Úkolů celkem</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-stat">
+    <div class="summary-val" id="s-done">—</div>
+    <div class="summary-lbl">Dokončeno</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-stat">
+    <div class="summary-val" id="s-pct" style="color:var(--accent2)">—</div>
+    <div class="summary-lbl">Průměrné plnění</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-stat">
+    <div class="summary-val" id="s-fakturovano" style="color:var(--accent2)">—</div>
+    <div class="summary-lbl">Fakturováno</div>
+  </div>
+  <div class="summary-divider"></div>
+  <div class="summary-stat">
+    <div class="summary-val" id="s-obrat" style="color:var(--gold)">—</div>
+    <div class="summary-lbl">Celkový obrat</div>
+  </div>
+  <div class="summary-bar-right">
+    <button class="btn-sec" onclick="reloadAll()">↺ Obnovit</button>
+    <button class="btn-add" onclick="openAddModal()">+ Přidat projekt</button>
+  </div>
+</div>
+
+<main>
+  <div class="section-title">Přehled projektů</div>
+  <div class="projects-grid" id="projects-grid">
+    <div class="loading-state"><div class="spinner"></div> Načítám data projektů…</div>
+  </div>
+
+  <div class="financial-section">
+    <div class="section-title">Finanční přehled</div>
+    <div class="fin-grid" id="fin-grid"></div>
+  </div>
+</main>
+
+<footer>Projektové řízení staveb · PP projekt s.r.o. · Pouze pro interní použití · <span id="footer-date"></span></footer>
+
+<div class="toast" id="toast"></div>
+
+<!-- ADD PROJECT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">Přidat projekt</div>
+    <div class="form-row">
+      <label class="form-label">Název projektu *</label>
+      <input class="form-input" id="f-name" type="text" placeholder="Rekonstrukce RD…">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Adresa</label>
+      <input class="form-input" id="f-address" type="text" placeholder="Ulice č.p., PSČ Město">
+    </div>
+    <div class="form-row">
+      <label class="form-label">JSONBin Bin ID *</label>
+      <input class="form-input" id="f-binid" type="text" placeholder="69ee169b…">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Odkaz na checklist (URL)</label>
+      <input class="form-input" id="f-url" type="url" placeholder="https://polacekv.github.io/…">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Tým (jména oddělená čárkou)</label>
+      <input class="form-input" id="f-team" type="text" placeholder="Petr, Vojtěch, Karel">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sec" onclick="closeModal()">Zrušit</button>
+      <button class="btn-add" onclick="saveProject()">Přidat projekt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── KONFIGURACE ──────────────────────────────────────────
+const API_KEY = '$2a$10$hJNaV8pH.6L7i4bd55367OMNWSbb3Sr8fSnrq7TfMd3F16AzObeKu';
+
+// Seznam projektů — přidávejte nové přes tlačítko nebo zde ručně
+let PROJECTS = [
+  {
+    id: 'vamberk-340',
+    name: 'Rekonstrukce a stavební úpravy RD Vamberk č.p. 340',
+    address: 'náměstí Dr. Lützowa 340, 517 54 Vamberk',
+    binId: '69ee169b36566621a8f2def4',
+    url: 'https://polacekv.github.io/rdvamberk/',
+    driveUrl: 'https://drive.google.com/drive/u/0/folders/1YcnzmvL66SR9h0Y5y7EC1SbaGtB0I9bZ',
+    team: ['Petr', 'Jirka', 'Karel', 'Vojtěch'],
+    color: '#1e4d7b'
+  },
+  {
+    id: 'trebechovice-381',
+    name: 'Rekonstrukce a stavební úpravy RD Třebechovice pod Orebem č.p. 381',
+    address: 'Hradecká č.p. 381, 503 46 Třebechovice pod Orebem',
+    binId: '69f79684856a682189a0b5d0',
+    url: 'https://polacekv.github.io/rdtrebechovice/',
+    driveUrl: 'https://drive.google.com/drive/u/0/folders/1znwHGhidx3824O0vTM63WWzG4C2k1CkF',
+    team: ['Petr', 'Vojtěch', 'Karel', 'Marek'],
+    color: '#2d7a4f'
+  },
+  {
+    id: 'ledec-758',
+    name: 'Pasport stávajícího stavu RD č.p. 758, Ledeč nad Sázavou',
+    address: 'Pod Stínadly č.p. 758, 584 01 Ledeč nad Sázavou',
+    binId: '6a06fff4c0954111d8290469',
+    url: 'https://polacekv.github.io/centrumledec/',
+    driveUrl: 'https://drive.google.com/drive/u/0/folders/1etUYextn_VXYYKs_5hGeD6nl_JFipVHa',
+    team: ['Petr', 'Vojta', 'Mates'],
+    color: '#8a3a1e'
+  }
+];
+
+const PHASES = ['Přípravná fáze', 'Projektová dokumentace', 'Inženýrská činnost', 'Povolení stavby', 'Realizace stavby'];
+const PHASE_COLORS = ['#1e4d7b', '#2d7a4f', '#8a3a1e', '#c49a2a', '#5a3a7a'];
+
+// Vlastní fáze pro projekty s jiným členěním
+const PROJECT_PHASES = {
+  'ledec-758': {
+    phases: ['Příprava projektu a zaměření', 'Pasport stavby — výkresová část'],
+    colors: ['#1e4d7b', '#8a3a1e']
+  }
+};
+
+// ── FINANCE DATA ─────────────────────────────────────────
+let finData = {};
+
+function loadLocal() {
+  const saved = localStorage.getItem('dashboard-projects');
+  if (saved) { try { PROJECTS = JSON.parse(saved); } catch {} }
+  const fin = localStorage.getItem('dashboard-finance');
+  if (fin) {
+    try {
+      finData = JSON.parse(fin);
+      // Migrace — přepiš výchozí data pokud jsou stará (bez čísla projektu)
+      migrateFinData();
+    } catch {}
+  } else {
+    initFinData();
+  }
+}
+
+function migrateFinData() {
+  // Vždy reinicializuj výchozí projekty — zachovej pouze uživatelsky přidané projekty
+  initFinData();
+}
+
+function initFinData() {
+  finData = {
+    'vamberk-340': {
+      rows: [
+        { desc: '1. záloha — 25 % (odsouhlasení konceptu výkresů)', amount: '44 750 Kč', status: 'faktura' },
+        { desc: '2. splátka — 50 % (předání PD)', amount: '89 500 Kč', status: 'planovano' },
+        { desc: 'Doplatek — 25 % (vydání povolení stavby)', amount: '44 750 Kč', status: 'planovano' },
+      ]
+    },
+    'trebechovice-381': {
+      rows: [
+        { desc: 'Zaměření stávajícího stavu', amount: '6 000 Kč', status: 'planovano' },
+        { desc: 'PD pro povolení stavby — kompletní dokumentace', amount: '79 000 Kč', status: 'planovano' },
+        { desc: 'Inženýrská činnost — vyjádření sítí, DO, podání žádosti', amount: '7 500 Kč', status: 'planovano' },
+      ]
+    },
+    'ledec-758': {
+      rows: [
+        { desc: 'Zaměření', amount: '15 000 Kč', status: 'planovano' },
+        { desc: 'Výkresová dokumentace', amount: '34 000 Kč', status: 'planovano' },
+      ]
+    }
+  };
+}
+
+function saveLocal() {
+  localStorage.setItem('dashboard-projects', JSON.stringify(PROJECTS));
+  localStorage.setItem('dashboard-finance', JSON.stringify(finData));
+}
+
+// Clear old fin cache so new default data loads
+localStorage.removeItem('dashboard-finance');
+
+// ── JSONBIN FETCH ─────────────────────────────────────────
+async function fetchProjectData(binId) {
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': API_KEY }
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.record;
+  } catch { return null; }
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function calcStats(tasks) {
+  if (!tasks || !tasks.length) return { total: 0, done: 0, inprog: 0, waiting: 0, open: 0, pct: 0, phases: [] };
+  const total = tasks.length;
+  const done = tasks.filter(t => t.status == 2 || t.completed).length;
+  const inprog = tasks.filter(t => t.status == 1).length;
+  const waiting = tasks.filter(t => t.status == 3).length;
+  const open = tasks.filter(t => t.status == 0).length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const phases = [0,1,2,3,4].map(pi => {
+    const pt = tasks.filter(t => t.phase === pi);
+    const pd = pt.filter(t => t.status == 2 || t.completed).length;
+    return { total: pt.length, done: pd, pct: pt.length ? Math.round(pd / pt.length * 100) : 0 };
+  });
+  // last completed task
+  const lastDone = tasks.filter(t => t.status == 2 || t.completed).slice(-1)[0];
+  return { total, done, inprog, waiting, open, pct, phases, lastDone };
+}
+
+// ── DONUT SVG ─────────────────────────────────────────────
+function buildDonut(pct, color) {
+  const r = 44;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  return `
+    <svg class="donut-svg" viewBox="0 0 110 110">
+      <circle class="donut-bg" cx="55" cy="55" r="${r}"/>
+      <circle class="donut-fill" cx="55" cy="55" r="${r}"
+        stroke="${color}"
+        stroke-dasharray="${circ}"
+        stroke-dashoffset="${offset}"/>
+    </svg>`;
+}
+
+// ── RENDER PROJECT CARD ───────────────────────────────────
+function renderCard(project, stats) {
+  const pct = stats.pct;
+  const donut = buildDonut(pct, project.color);
+
+  const projectPhases = PROJECT_PHASES[project.id] ? PROJECT_PHASES[project.id].phases : PHASES;
+  const projectPhaseColors = PROJECT_PHASES[project.id] ? PROJECT_PHASES[project.id].colors : PHASE_COLORS;
+
+  const phasesHtml = projectPhases.map((name, i) => {
+    const ph = stats.phases[i] || { total: 0, done: 0, pct: 0 };
+    return `
+      <div class="phase-row">
+        <span class="phase-num">0${i+1}</span>
+        <span class="phase-name">${name}</span>
+        <div class="phase-bar-outer">
+          <div class="phase-bar-inner" style="width:${ph.pct}%;background:${projectPhaseColors[i]}"></div>
+        </div>
+        <span class="phase-count">${ph.done}/${ph.total}</span>
+      </div>`;
+  }).join('');
+
+  const teamHtml = project.team.map(m => `<span class="team-chip">${m}</span>`).join('');
+
+  const lastActivity = stats.lastDone
+    ? `<div class="last-activity"><div class="activity-dot"></div><div class="activity-text">Naposledy dokončeno: <strong>${stats.lastDone.name}</strong><span class="activity-time">${stats.lastDone.sub || ''} · ${stats.lastDone.owner || '—'}</span></div></div>`
+    : `<div class="last-activity"><div class="activity-dot" style="background:var(--text-light)"></div><div class="activity-text" style="color:var(--text-light)">Zatím žádný dokončený úkol</div></div>`;
+
+  return `
+    <div class="project-card">
+      <div class="card-header">
+        <div class="card-color-bar" style="background:${project.color}"></div>
+        <div class="card-header-info">
+          <div class="card-tag">Projekt · ${project.id}</div>
+          <div class="card-name">${project.name}</div>
+          <div class="card-address">${project.address}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-self:flex-start;margin-top:2px">
+          <a class="card-link" href="${project.url}" target="_blank" rel="noopener">↗ Checklist</a>
+          ${project.driveUrl ? `<a class="card-link" href="${project.driveUrl}" target="_blank" rel="noopener" style="background:#e8f5ed;border-color:#b8dfc8;color:#2a7a4a">▲ Google Disk</a>` : ''}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-donut-wrap">
+          <div class="donut-container">
+            ${donut}
+            <div class="donut-center">
+              <div class="donut-pct" style="color:${project.color}">${pct}%</div>
+              <div class="donut-sub">splněno</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#2d7a4f"></div>${stats.done} dokončeno</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#c49a2a"></div>${stats.inprog} probíhá</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1e4d7b"></div>${stats.waiting} čeká se</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--border-strong)"></div>${stats.open} nezahájeno</div>
+          </div>
+        </div>
+        <div class="card-right">
+          <div class="phases-list">${phasesHtml}</div>
+          <div class="team-row"><span class="team-label">Tým</span>${teamHtml}</div>
+          ${lastActivity}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── RENDER FINANCE TABLE ──────────────────────────────────
+const FIN_LABELS = {
+  'vamberk-340':      { num: '2601', short: 'RD Vamberk' },
+  'trebechovice-381': { num: '2603', short: 'RD Třebechovice' },
+  'ledec-758':        { num: '2604', short: 'Pasport Ledeč n. Sáz.' }
+};
+
+function renderFinTable(project) {
+  if (!finData[project.id]) { initFinData(); }
+  const rows = finData[project.id].rows;
+  const label = FIN_LABELS[project.id] || { num: '—', short: project.name.split(' ').slice(-2).join(' ') };
+
+  const rowsHtml = rows.map((r, i) => `
+    <tr class="fin-row-${r.status}">
+      <td><input class="fin-input" value="${r.desc}" placeholder="Položka…"
+        onchange="updateFin('${project.id}', ${i}, 'desc', this.value)"></td>
+      <td class="fin-amount"><input type="text" value="${r.amount}" placeholder="0 Kč"
+        onchange="updateFin('${project.id}', ${i}, 'amount', this.value)"></td>
+      <td>
+        <select class="fin-status-sel" onchange="updateFin('${project.id}', ${i}, 'status', this.value); renderFinGrid()">
+          <option value="planovano" ${r.status==='planovano'?'selected':''}>Plánováno</option>
+          <option value="faktura" ${r.status==='faktura'?'selected':''}>Faktura</option>
+          <option value="zaplaceno" ${r.status==='zaplaceno'?'selected':''}>Zaplaceno</option>
+        </select>
+      </td>
+      <td style="text-align:center">
+        <button class="fin-btn" onclick="deleteFinRow('${project.id}', ${i})" title="Smazat">✕</button>
+      </td>
+    </tr>`).join('');
+
+  const emptyRow = rows.length === 0
+    ? `<tr class="fin-empty"><td colspan="4">Žádné položky — klikněte + Přidat řádek</td></tr>`
+    : '';
+
+  return `
+    <div class="fin-card">
+      <div class="fin-card-header">
+        <div class="card-color-bar" style="background:${project.color};width:4px;border-radius:2px;align-self:stretch"></div>
+        <div class="fin-card-title"><span style="font-family:var(--mono);color:var(--text-muted);font-size:11px;font-weight:400">${label.num} —</span> ${label.short}</div>
+        <div class="fin-card-tag">Finanční přehled</div>
+      </div>
+      <div class="fin-table-wrap">
+        <table class="fin-table">
+          <thead>
+            <tr>
+              <th>Položka</th>
+              <th style="width:130px;text-align:right">Částka</th>
+              <th style="width:100px">Stav</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="fin-body-${project.id}">${rowsHtml}${emptyRow}</tbody>
+        </table>
+      </div>
+      <div class="fin-footer">
+        <button class="fin-btn" onclick="addFinRow('${project.id}')">+ Přidat řádek</button>
+        <button class="fin-btn fin-btn-save" onclick="saveFinance()">💾 Uložit</button>
+      </div>
+    </div>`;
+}
+
+// ── FINANCE ACTIONS ───────────────────────────────────────
+function updateFin(projectId, idx, field, val) {
+  finData[projectId].rows[idx][field] = val;
+}
+function addFinRow(projectId) {
+  finData[projectId].rows.push({ desc: '', amount: '', status: 'planovano' });
+  renderFinGrid();
+}
+function deleteFinRow(projectId, idx) {
+  finData[projectId].rows.splice(idx, 1);
+  renderFinGrid();
+}
+function saveFinance() {
+  saveLocal();
+  toast('Finance uloženy ✓');
+}
+
+// ── GLOBAL STATS ──────────────────────────────────────────
+let allStats = {};
+
+function parseAmount(str) {
+  // Extrahuje číslo z řetězce jako "44 750 Kč" nebo "79000"
+  if (!str) return 0;
+  const num = str.replace(/\s/g, '').replace('Kč', '').replace(',', '.').trim();
+  return parseFloat(num) || 0;
+}
+
+function formatKc(num) {
+  if (num === 0) return '0 Kč';
+  return num.toLocaleString('cs-CZ') + ' Kč';
+}
+
+function calcFinTotals() {
+  let fakturovano = 0; // zaplaceno
+  let obrat = 0;       // zaplaceno + faktura + planovano
+  Object.values(finData).forEach(proj => {
+    (proj.rows || []).forEach(r => {
+      const amt = parseAmount(r.amount);
+      obrat += amt;
+      if (r.status === 'zaplaceno') fakturovano += amt;
+    });
+  });
+  return { fakturovano, obrat };
+}
+
+function updateSummary() {
+  let totalTasks = 0, totalDone = 0;
+  Object.values(allStats).forEach(s => { totalTasks += s.total; totalDone += s.done; });
+  const pct = totalTasks ? Math.round(totalDone / totalTasks * 100) : 0;
+  const { fakturovano, obrat } = calcFinTotals();
+  document.getElementById('s-projects').textContent = PROJECTS.length;
+  document.getElementById('s-tasks').textContent = totalTasks;
+  document.getElementById('s-done').textContent = totalDone;
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('s-fakturovano').textContent = formatKc(fakturovano);
+  document.getElementById('s-obrat').textContent = formatKc(obrat);
+  document.getElementById('last-updated').textContent = 'Aktualizováno: ' + new Date().toLocaleTimeString('cs-CZ');
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function renderFinGrid() {
+  const grid = document.getElementById('fin-grid');
+  grid.innerHTML = PROJECTS.map(p => renderFinTable(p)).join('');
+  updateSummary();
+}
+
+async function reloadAll() {
+  const grid = document.getElementById('projects-grid');
+  grid.innerHTML = '<div class="loading-state"><div class="spinner"></div> Načítám data projektů…</div>';
+
+  const cards = await Promise.all(PROJECTS.map(async (p) => {
+    const data = await fetchProjectData(p.binId);
+    const stats = calcStats(data ? data.tasks : []);
+    allStats[p.id] = stats;
+    return renderCard(p, stats);
+  }));
+
+  grid.innerHTML = cards.join('');
+  updateSummary();
+  renderFinGrid();
+}
+
+// ── ADD PROJECT MODAL ─────────────────────────────────────
+function openAddModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+function saveProject() {
+  const name = document.getElementById('f-name').value.trim();
+  const binId = document.getElementById('f-binid').value.trim();
+  if (!name || !binId) { alert('Vyplňte název a Bin ID.'); return; }
+  const colors = ['#1e4d7b','#2d7a4f','#8a3a1e','#c49a2a','#5a3a7a','#4a6a3a'];
+  PROJECTS.push({
+    id: 'projekt-' + Date.now(),
+    name,
+    address: document.getElementById('f-address').value.trim(),
+    binId,
+    url: document.getElementById('f-url').value.trim(),
+    team: document.getElementById('f-team').value.split(',').map(s => s.trim()).filter(Boolean),
+    color: colors[PROJECTS.length % colors.length]
+  });
+  saveLocal();
+  closeModal();
+  reloadAll();
+  toast('Projekt přidán ✓');
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+document.getElementById('footer-date').textContent = new Date().getFullYear();
+loadLocal();
+reloadAll();
+</script>
+</body>
+</html>

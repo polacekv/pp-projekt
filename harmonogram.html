@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harmonogram — PP projekt s.r.o.</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ── GANTT LAYOUT ── */
+.gantt-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+.gantt-toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.gantt-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Labels vlevo */
+.gantt-labels {
+  width: 260px;
+  min-width: 260px;
+  flex-shrink: 0;
+  border-right: 2px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 10;
+}
+
+.gantt-labels-header {
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface3);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-m);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.proj-label-row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.proj-label-row:hover { background: var(--surface2); }
+
+.proj-label-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.proj-label-info { flex: 1; min-width: 0; }
+.proj-label-name {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proj-label-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-m);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Phase sub-rows */
+.phase-label-row {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface3);
+}
+.phase-label-name {
+  font-size: 11px;
+  color: var(--text-m);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.phase-label-person {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-l);
+  white-space: nowrap;
+}
+
+/* Timeline vpravo */
+.gantt-timeline {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.gantt-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface3);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  min-width: max-content;
+}
+
+/* Týdenní a denní hlavičky */
+.week-header-row {
+  height: 28px;
+  display: flex;
+  min-width: max-content;
+  border-bottom: 1px solid var(--border);
+}
+.day-header-row {
+  height: 28px;
+  display: flex;
+  min-width: max-content;
+}
+
+.week-cell {
+  border-right: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-m);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  background: var(--surface3);
+  flex-shrink: 0;
+}
+.week-cell.current { background: var(--accent-lt); color: var(--accent); }
+
+.day-cell {
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+  cursor: default;
+  background: var(--surface);
+}
+.day-cell:hover { background: var(--surface2); }
+.day-cell.weekend { background: #faf7f2; }
+.day-cell.today   { background: rgba(5,99,193,.08); border-right-color: var(--accent); }
+.day-num {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+}
+.day-name {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-l);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.day-cell.today .day-num { color: var(--accent); font-weight: 700; }
+
+/* Rows */
+.gantt-rows {
+  min-width: max-content;
+  position: relative;
+}
+
+.gantt-proj-row {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  background: var(--surface);
+}
+.gantt-proj-row:hover { background: rgba(5,99,193,.02); }
+
+.gantt-phase-row {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  background: var(--surface3);
+}
+
+/* Vertikální čáry dnů */
+.gantt-day-col {
+  position: absolute;
+  top: 0; bottom: 0;
+  border-right: 1px solid var(--border);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.gantt-day-col.weekend { background: rgba(0,0,0,.018); }
+.gantt-day-col.today   { border-right: 2px solid rgba(5,99,193,.4); }
+
+/* Fázový pruh */
+.phase-bar {
+  position: absolute;
+  top: 8px; bottom: 8px;
+  border-radius: 4px;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+  transition: opacity .15s, box-shadow .15s;
+  user-select: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+  z-index: 5;
+}
+.phase-bar:hover {
+  opacity: .92;
+  box-shadow: 0 2px 8px rgba(0,0,0,.22);
+  z-index: 10;
+}
+.phase-bar:active { cursor: grabbing; }
+
+.phase-bar-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255,255,255,.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.phase-bar-person {
+  font-size: 8px;
+  color: rgba(255,255,255,.75);
+  pointer-events: none;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+/* Resize handles */
+.resize-handle {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 6;
+}
+.resize-handle.left  { left: 0; border-radius: 4px 0 0 4px; }
+.resize-handle.right { right: 0; border-radius: 0 4px 4px 0; }
+.resize-handle:hover { background: rgba(255,255,255,.2); }
+
+/* Today line */
+.today-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 2px;
+  background: var(--accent);
+  opacity: .6;
+  pointer-events: none;
+  z-index: 8;
+}
+.today-line-label {
+  position: absolute;
+  top: -20px;
+  left: -16px;
+  font-family: var(--mono);
+  font-size: 8px;
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 5px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+/* Edit modal */
+.phase-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Empty */
+.gantt-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  height: 300px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-m);
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar"></nav>
+
+<div class="main-wrap">
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Harmonogram</div>
+      <div class="page-subtitle">Časová osa projektů · přetáhněte fáze pro úpravu termínů</div>
+    </div>
+    <div class="page-header-right">
+      <button class="btn" onclick="scrollToToday()">⊙ Dnes</button>
+      <button class="btn" onclick="reloadGantt()">↺ Obnovit</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="gantt-toolbar">
+    <span class="filter-label">Projekt:</span>
+    <div class="filter-bar" id="proj-filter"></div>
+    <div class="sep"></div>
+    <span class="mono text-m" style="font-size:10px">Šířka dne:</span>
+    <button class="btn btn-sm" onclick="setDayW(32)">Měsíc</button>
+    <button class="btn btn-sm" onclick="setDayW(48)">Týden</button>
+    <button class="btn btn-sm" onclick="setDayW(64)">Den</button>
+    <div class="sep"></div>
+    <span class="mono text-m" style="font-size:10px">Klikněte na fázi pro editaci termínů</span>
+  </div>
+
+  <!-- GANTT -->
+  <div class="gantt-wrap">
+    <div class="gantt-container">
+      <!-- Labels vlevo -->
+      <div class="gantt-labels" id="gantt-labels">
+        <div class="gantt-labels-header">Projekt / Fáze</div>
+        <div id="labels-body"></div>
+      </div>
+
+      <!-- Timeline vpravo -->
+      <div class="gantt-timeline" id="gantt-timeline" onscroll="syncScroll(this)">
+        <div id="gantt-header-wrap">
+          <div class="week-header-row" id="week-row"></div>
+          <div class="day-header-row" id="day-row"></div>
+        </div>
+        <div class="gantt-rows" id="gantt-rows">
+          <div class="loading-state"><div class="spinner"></div> Načítám harmonogram…</div>
+        </div>
+        <div class="today-line" id="today-line">
+          <div class="today-line-label" id="today-label"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Editace fáze -->
+<div class="modal-overlay" id="modal-phase">
+  <div class="modal">
+    <div class="modal-title">
+      Editace fáze
+      <span class="modal-title-sub" id="me-subtitle"></span>
+    </div>
+    <input type="hidden" id="me-proj-id">
+    <input type="hidden" id="me-phase-idx">
+
+    <div class="phase-edit-grid">
+      <div class="form-row">
+        <label class="form-label required">Datum zahájení fáze</label>
+        <input class="form-input" id="me-start" type="date">
+      </div>
+      <div class="form-row">
+        <label class="form-label required">Datum dokončení fáze</label>
+        <input class="form-input" id="me-end" type="date">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Odpovědná osoba</label>
+      <select class="form-select" id="me-owner"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Poznámka</label>
+      <textarea class="form-textarea" id="me-note" rows="2" placeholder="Poznámka k fázi…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="Utils.closeModal('modal-phase')">Zrušit</button>
+      <button class="btn btn-primary" onclick="savePhaseEdit()">Uložit termín ✓</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+/* ── STAV ── */
+let projects = [];
+let workers  = [];
+let filterProjs = new Set();   // prázdná = vše
+let DAY_W = 40;                // px/den
+let ganttStartDate = null;
+let ganttEndDate   = null;
+let ganttDays = [];
+let weekGroups = [];
+
+/* ── INIT ── */
+async function init() {
+  Sidebar.render('harmonogram');
+  [projects, workers] = await Promise.all([
+    STORE.getProjects(),
+    STORE.getWorkers(),
+  ]);
+  buildGantt();
+  Utils.setupModalClose('modal-phase');
+}
+
+async function reloadGantt() {
+  projects = await STORE.getProjects();
+  buildGantt();
+}
+
+/* ── FILTRY PROJEKTŮ ── */
+function renderProjFilter() {
+  const el = document.getElementById('proj-filter');
+  el.innerHTML = `<button class="filter-btn ${filterProjs.size===0?'active':''}" onclick="filterAll()">Vše</button>` +
+    projects.map(p =>
+      `<button class="filter-btn ${filterProjs.has(p.id)?'active':''}" onclick="toggleProjFilter('${p.id}', this)"
+        style="border-left:3px solid ${p.color}">
+        ${p.name.split(' ').slice(0,3).join(' ')}
+      </button>`
+    ).join('');
+}
+
+function filterAll() {
+  filterProjs.clear();
+  document.querySelectorAll('#proj-filter .filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('#proj-filter .filter-btn').classList.add('active');
+  buildGantt();
+}
+
+function toggleProjFilter(id, btn) {
+  document.querySelector('#proj-filter .filter-btn').classList.remove('active');
+  if (filterProjs.has(id)) { filterProjs.delete(id); btn.classList.remove('active'); }
+  else { filterProjs.add(id); btn.classList.add('active'); }
+  if (filterProjs.size === 0) {
+    document.querySelector('#proj-filter .filter-btn').classList.add('active');
+  }
+  buildGantt();
+}
+
+/* ── GANTT BUILD ── */
+function buildGantt() {
+  renderProjFilter();
+  const visible = filterProjs.size > 0
+    ? projects.filter(p => filterProjs.has(p.id))
+    : projects;
+
+  if (!visible.length) {
+    document.getElementById('labels-body').innerHTML = '';
+    document.getElementById('gantt-rows').innerHTML =
+      '<div class="gantt-empty"><div style="font-size:32px">📅</div>Žádné projekty v harmonogramu.<br>Přidejte projekty na Dashboardu.</div>';
+    document.getElementById('week-row').innerHTML = '';
+    document.getElementById('day-row').innerHTML = '';
+    return;
+  }
+
+  // Výpočet rozsahu dat
+  computeDateRange(visible);
+  buildHeaders();
+  buildRows(visible);
+  drawTodayLine();
+}
+
+function computeDateRange(visible) {
+  const today = new Date();
+  let minD = new Date(today);
+  let maxD = new Date(today);
+  minD.setDate(minD.getDate() - 30);
+  maxD.setDate(maxD.getDate() + 90);
+
+  visible.forEach(p => {
+    (p.phases || []).forEach(ph => {
+      if (ph.startDate) { const d = new Date(ph.startDate); if (d < minD) minD = d; }
+      if (ph.endDate)   { const d = new Date(ph.endDate);   if (d > maxD) maxD = d; }
+    });
+    if (p.startDate) { const d = new Date(p.startDate); if (d < minD) minD = d; }
+    if (p.endDate)   { const d = new Date(p.endDate);   if (d > maxD) maxD = d; }
+  });
+
+  // Padding
+  minD.setDate(minD.getDate() - 7);
+  maxD.setDate(maxD.getDate() + 14);
+
+  // Zarovnat na pondělí
+  const dow = minD.getDay();
+  if (dow !== 1) minD.setDate(minD.getDate() - (dow === 0 ? 6 : dow - 1));
+
+  ganttStartDate = minD;
+  ganttEndDate   = maxD;
+
+  // Vygenerovat dny
+  ganttDays = [];
+  const cur = new Date(minD);
+  while (cur <= maxD) {
+    ganttDays.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Týdenní skupiny
+  weekGroups = [];
+  let wStart = 0;
+  ganttDays.forEach((d, i) => {
+    if (d.getDay() === 1 || i === 0) {
+      if (wStart < i) weekGroups.push({ start: wStart, end: i - 1 });
+      wStart = i;
+    }
+  });
+  weekGroups.push({ start: wStart, end: ganttDays.length - 1 });
+}
+
+function buildHeaders() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0,10);
+
+  // Týdny
+  const wr = document.getElementById('week-row');
+  wr.innerHTML = weekGroups.map(wg => {
+    const d = ganttDays[wg.start];
+    const isCurrentWeek = ganttDays.slice(wg.start, wg.end+1).some(dd =>
+      dd.toISOString().slice(0,10) === todayStr);
+    const w = (wg.end - wg.start + 1) * DAY_W;
+    const label = `${d.toLocaleDateString('cs-CZ',{day:'2-digit',month:'short'})} – ${ganttDays[wg.end].toLocaleDateString('cs-CZ',{day:'2-digit',month:'short',year:'2-digit'})}`;
+    return `<div class="week-cell${isCurrentWeek?' current':''}" style="width:${w}px">${label}</div>`;
+  }).join('');
+
+  // Dny
+  const dr = document.getElementById('day-row');
+  const days_cs = ['Ne','Po','Út','St','Čt','Pá','So'];
+  dr.innerHTML = ganttDays.map(d => {
+    const iso  = d.toISOString().slice(0,10);
+    const dow  = d.getDay();
+    const isWe = dow === 0 || dow === 6;
+    const isTd = iso === todayStr;
+    return `<div class="day-cell${isWe?' weekend':''}${isTd?' today':''}" style="width:${DAY_W}px">
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-name">${days_cs[dow]}</span>
+    </div>`;
+  }).join('');
+}
+
+function buildRows(visible) {
+  const lb = document.getElementById('labels-body');
+  const gr = document.getElementById('gantt-rows');
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  lb.innerHTML = '';
+  gr.innerHTML = '';
+
+  // Kolumny pozadí
+  const colsHtml = ganttDays.map((d, i) => {
+    const dow = d.getDay();
+    const isWe = dow === 0 || dow === 6;
+    const isTd = d.toISOString().slice(0,10) === today.toISOString().slice(0,10);
+    return `<div class="gantt-day-col${isWe?' weekend':''}${isTd?' today':''}"
+      style="left:${i * DAY_W}px;width:${DAY_W}px"></div>`;
+  }).join('');
+
+  visible.forEach(p => {
+    // Projekt label
+    const lProw = document.createElement('div');
+    lProw.className = 'proj-label-row';
+    lProw.innerHTML = `
+      <div class="proj-label-dot" style="background:${p.color}"></div>
+      <div class="proj-label-info">
+        <div class="proj-label-name">${p.name}</div>
+        <div class="proj-label-sub">${p.address || p.client || '—'}</div>
+      </div>`;
+    lb.appendChild(lProw);
+
+    // Projekt gantt row (placeholder)
+    const gProw = document.createElement('div');
+    gProw.className = 'gantt-proj-row';
+    gProw.style.width = (ganttDays.length * DAY_W) + 'px';
+    gProw.innerHTML = colsHtml;
+    gr.appendChild(gProw);
+
+    // Fáze
+    (p.phases || []).forEach((ph, phIdx) => {
+      // Label
+      const lPhrow = document.createElement('div');
+      lPhrow.className = 'phase-label-row';
+      lPhrow.innerHTML = `
+        <span class="phase-label-name">${ph.icon || '▪'} ${ph.label}</span>
+        <span class="phase-label-person">${ph.owner || ''}</span>`;
+      lb.appendChild(lPhrow);
+
+      // Gantt row s pruhem
+      const gPhrow = document.createElement('div');
+      gPhrow.className = 'gantt-phase-row';
+      gPhrow.style.width = (ganttDays.length * DAY_W) + 'px';
+      gPhrow.innerHTML = colsHtml;
+
+      // Fázový pruh
+      if (ph.startDate && ph.endDate) {
+        const bar = buildPhaseBar(p, ph, phIdx);
+        if (bar) gPhrow.appendChild(bar);
+      } else {
+        // Placeholder — kliknutím nastavit
+        const ph_hint = document.createElement('div');
+        ph_hint.style.cssText = `position:absolute;left:0;right:0;top:8px;bottom:8px;
+          border:2px dashed var(--border-s);border-radius:4px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;
+          font-family:var(--mono);font-size:9px;color:var(--text-l)`;
+        ph_hint.textContent = 'Klikněte pro nastavení termínu';
+        ph_hint.onclick = () => openPhaseEdit(p.id, phIdx, ph);
+        gPhrow.appendChild(ph_hint);
+      }
+
+      gr.appendChild(gPhrow);
+    });
+  });
+}
+
+function buildPhaseBar(p, ph, phIdx) {
+  const sDate = new Date(ph.startDate); sDate.setHours(0,0,0,0);
+  const eDate = new Date(ph.endDate);   eDate.setHours(0,0,0,0);
+  const ganttS = new Date(ganttStartDate); ganttS.setHours(0,0,0,0);
+
+  const sOff = Math.round((sDate - ganttS) / 86400000);
+  const eOff = Math.round((eDate - ganttS) / 86400000);
+
+  if (eOff < 0 || sOff > ganttDays.length) return null;
+
+  const left   = Math.max(0, sOff) * DAY_W;
+  const right  = Math.min(ganttDays.length, eOff + 1) * DAY_W;
+  const width  = Math.max(DAY_W, right - left);
+
+  const bar = document.createElement('div');
+  bar.className = 'phase-bar';
+  bar.style.cssText = `left:${left}px;width:${width}px;background:${p.color};`;
+  bar.dataset.projId   = p.id;
+  bar.dataset.phaseIdx = phIdx;
+  bar.onclick = () => openPhaseEdit(p.id, phIdx, ph);
+
+  bar.innerHTML = `
+    <div class="resize-handle left" onmousedown="startResize(event,'left','${p.id}',${phIdx})"></div>
+    <span class="phase-bar-label">${ph.label}</span>
+    ${ph.owner ? `<span class="phase-bar-person">· ${ph.owner}</span>` : ''}
+    <div class="resize-handle right" onmousedown="startResize(event,'right','${p.id}',${phIdx})"></div>`;
+
+  // Drag to move
+  bar.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('resize-handle')) return;
+    startDrag(e, p.id, phIdx);
+  });
+
+  return bar;
+}
+
+/* ── TODAY LINE ── */
+function drawTodayLine() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ganttS = new Date(ganttStartDate); ganttS.setHours(0,0,0,0);
+  const off = Math.round((today - ganttS) / 86400000);
+  const left = off * DAY_W + DAY_W / 2;
+
+  const line = document.getElementById('today-line');
+  const lbl  = document.getElementById('today-label');
+  line.style.left = left + 'px';
+  lbl.textContent = 'Dnes ' + today.toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit'});
+}
+
+/* ── SCROLL TO TODAY ── */
+function scrollToToday() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ganttS = new Date(ganttStartDate); ganttS.setHours(0,0,0,0);
+  const off = Math.round((today - ganttS) / 86400000);
+  const tl = document.getElementById('gantt-timeline');
+  tl.scrollLeft = Math.max(0, off * DAY_W - tl.clientWidth / 2);
+}
+
+/* ── SYNC SCROLL labels ↔ timeline ── */
+function syncScroll(src) {
+  document.getElementById('gantt-labels').scrollTop = src.scrollTop;
+}
+
+/* ── DAY WIDTH ── */
+function setDayW(w) {
+  DAY_W = w;
+  buildGantt();
+}
+
+/* ── DRAG TO MOVE ── */
+let dragState = null;
+
+function startDrag(e, projId, phIdx) {
+  e.preventDefault();
+  const p  = projects.find(x => x.id === projId);
+  const ph = p.phases[phIdx];
+  dragState = {
+    projId, phIdx,
+    startX: e.clientX,
+    origStart: ph.startDate,
+    origEnd:   ph.endDate,
+  };
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', endDrag);
+}
+
+function onDrag(e) {
+  if (!dragState) return;
+  const dx   = e.clientX - dragState.startX;
+  const days = Math.round(dx / DAY_W);
+  if (days === 0) return;
+
+  const p  = projects.find(x => x.id === dragState.projId);
+  const ph = p.phases[dragState.phIdx];
+
+  const sDate = new Date(dragState.origStart);
+  sDate.setDate(sDate.getDate() + days);
+  const eDate = new Date(dragState.origEnd);
+  eDate.setDate(eDate.getDate() + days);
+
+  ph.startDate = sDate.toISOString().slice(0,10);
+  ph.endDate   = eDate.toISOString().slice(0,10);
+  buildGantt();
+}
+
+async function endDrag() {
+  if (!dragState) return;
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', endDrag);
+  const { projId } = dragState;
+  dragState = null;
+  const p = projects.find(x => x.id === projId);
+  await STORE.saveProject(p);
+  Toast.ok('Termín fáze upraven ✓');
+}
+
+/* ── RESIZE ── */
+let resizeState = null;
+
+function startResize(e, side, projId, phIdx) {
+  e.preventDefault();
+  e.stopPropagation();
+  const p  = projects.find(x => x.id === projId);
+  const ph = p.phases[phIdx];
+  resizeState = { projId, phIdx, side, startX: e.clientX, origStart: ph.startDate, origEnd: ph.endDate };
+  document.addEventListener('mousemove', onResize);
+  document.addEventListener('mouseup', endResize);
+}
+
+function onResize(e) {
+  if (!resizeState) return;
+  const dx   = e.clientX - resizeState.startX;
+  const days = Math.round(dx / DAY_W);
+  if (days === 0) return;
+
+  const p  = projects.find(x => x.id === resizeState.projId);
+  const ph = p.phases[resizeState.phIdx];
+
+  if (resizeState.side === 'left') {
+    const d = new Date(resizeState.origStart);
+    d.setDate(d.getDate() + days);
+    if (d < new Date(resizeState.origEnd)) {
+      ph.startDate = d.toISOString().slice(0,10);
+    }
+  } else {
+    const d = new Date(resizeState.origEnd);
+    d.setDate(d.getDate() + days);
+    if (d > new Date(resizeState.origStart)) {
+      ph.endDate = d.toISOString().slice(0,10);
+    }
+  }
+  buildGantt();
+}
+
+async function endResize() {
+  if (!resizeState) return;
+  document.removeEventListener('mousemove', onResize);
+  document.removeEventListener('mouseup', endResize);
+  const { projId } = resizeState;
+  resizeState = null;
+  const p = projects.find(x => x.id === projId);
+  await STORE.saveProject(p);
+  Toast.ok('Termín fáze upraven ✓');
+}
+
+/* ── MODAL EDITACE FÁZE ── */
+function openPhaseEdit(projId, phIdx, ph) {
+  const p = projects.find(x => x.id === projId);
+  document.getElementById('me-proj-id').value  = projId;
+  document.getElementById('me-phase-idx').value = phIdx;
+  document.getElementById('me-subtitle').textContent = p.name.split(' ').slice(0,3).join(' ') + ' · ' + ph.label;
+  document.getElementById('me-start').value = ph.startDate || Utils.today();
+  document.getElementById('me-end').value   = ph.endDate   || Utils.addDays(Utils.today(), 30);
+  document.getElementById('me-note').value  = ph.note || '';
+
+  // Dropdown osob
+  const ownerSel = document.getElementById('me-owner');
+  const team = p.team || [];
+  ownerSel.innerHTML = '<option value="">— Nepřiřazeno —</option>' +
+    team.map(t => `<option value="${t}" ${ph.owner===t?'selected':''}>${t}</option>`).join('') +
+    workers.filter(w => !team.includes(w.name))
+      .map(w => `<option value="${w.name}" ${ph.owner===w.name?'selected':''}>${w.name}</option>`).join('');
+
+  Utils.openModal('modal-phase');
+}
+
+async function savePhaseEdit() {
+  const projId  = document.getElementById('me-proj-id').value;
+  const phIdx   = parseInt(document.getElementById('me-phase-idx').value);
+  const start   = document.getElementById('me-start').value;
+  const end     = document.getElementById('me-end').value;
+  const owner   = document.getElementById('me-owner').value;
+  const note    = document.getElementById('me-note').value.trim();
+
+  if (!start || !end) { Toast.warn('Vyplňte datum zahájení i dokončení'); return; }
+  if (new Date(end) < new Date(start)) { Toast.warn('Datum dokončení musí být po zahájení'); return; }
+
+  const p = projects.find(x => x.id === projId);
+  p.phases[phIdx].startDate = start;
+  p.phases[phIdx].endDate   = end;
+  p.phases[phIdx].owner     = owner;
+  p.phases[phIdx].note      = note;
+
+  await STORE.saveProject(p);
+  Utils.closeModal('modal-phase');
+  buildGantt();
+  Toast.ok('Termín fáze uložen ✓');
+}
+
+Utils.setupModalClose('modal-phase');
+init();
+</script>
+</body>
+</html>

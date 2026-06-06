@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — PP projekt s.r.o.</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+/* ── SUMMARY BAR ── */
+.summary-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.sum-val {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.sum-lbl {
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-m);
+}
+.sum-divider { width: 1px; height: 32px; background: var(--border); }
+.sum-bar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── PROJECT GRID ── */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(580px, 1fr));
+  gap: 18px;
+}
+
+/* ── PROJECT CARD ── */
+.proj-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--sh);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .18s;
+}
+.proj-card:hover {
+  box-shadow: var(--sh-lg);
+  transform: translateY(-2px);
+}
+
+.proj-card-header {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.proj-card-info { flex: 1; min-width: 0; }
+.proj-card-id {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-m);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.proj-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+.proj-card-addr {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-m);
+}
+.proj-card-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.proj-link {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid var(--accent-bd);
+  background: var(--accent-lt);
+  color: var(--accent);
+  white-space: nowrap;
+  transition: background .12s;
+}
+.proj-link:hover { background: #d4e8f5; }
+.proj-link.drive {
+  border-color: var(--ok-bd);
+  background: var(--ok-lt);
+  color: var(--ok);
+}
+.proj-link.drive:hover { background: #d0eeda; }
+
+/* ── CARD BODY ── */
+.proj-card-body {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+}
+
+/* DONUT SIDE */
+.proj-donut-wrap {
+  padding: 16px 10px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-right: 1px solid var(--border);
+}
+.donut-container { position: relative; width: 80px; height: 80px; }
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.donut-pct {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+.donut-sub {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-m);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.donut-legend { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-m);
+}
+.legend-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* PHASES SIDE */
+.proj-right { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.phases-list { display: flex; flex-direction: column; gap: 4px; }
+.phase-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.phase-num {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-l);
+  width: 18px;
+  flex-shrink: 0;
+}
+.phase-name {
+  flex: 1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.phase-bar-out {
+  width: 72px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.phase-bar-in { height: 100%; border-radius: 2px; }
+.phase-cnt {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-m);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.team-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.team-lbl {
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-m);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.team-chip {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.last-act {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-m);
+}
+.act-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* ── ADD PROJECT MODAL ── */
+.phase-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 4px;
+}
+.phase-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .12s;
+  font-size: 12px;
+  background: var(--surface);
+}
+.phase-check-item:hover { border-color: var(--accent-bd); background: var(--accent-lt); }
+.phase-check-item.selected { border-color: var(--accent); background: var(--accent-lt); }
+.phase-check-item input[type=checkbox] { accent-color: var(--accent); }
+.phase-icon { font-size: 14px; }
+
+/* Step indicator */
+.step-indicator {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+.step {
+  flex: 1;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--text-l);
+  position: relative;
+  padding-bottom: 8px;
+}
+.step.active { color: var(--accent); }
+.step.done { color: var(--ok); }
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--surface);
+}
+.step.active .step-num { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+.step.done .step-num   { border-color: var(--ok); background: var(--ok); color: #fff; }
+.step-label { display: block; font-size: 8px; letter-spacing: .5px; }
+
+/* ── EMPTY STATE ── */
+.empty-dashboard {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--text-m);
+}
+.empty-dashboard h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.empty-dashboard p { font-size: 13px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar"></nav>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle">Přehled zakázek · PP projekt s.r.o.</div>
+    </div>
+    <div class="page-header-right">
+      <button class="btn" onclick="reloadAll()">↺ Obnovit</button>
+      <button class="btn btn-primary" onclick="openAddWizard()">+ Přidat projekt</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY BAR -->
+  <div class="summary-bar">
+    <div class="sum-stat">
+      <div class="sum-val" id="s-count">—</div>
+      <div class="sum-lbl">Projektů celkem</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-stat">
+      <div class="sum-val" id="s-active">—</div>
+      <div class="sum-lbl">Probíhá</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-stat">
+      <div class="sum-val" id="s-done" style="color:var(--ok)">—</div>
+      <div class="sum-lbl">Dokončeno</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-stat">
+      <div class="sum-val" id="s-pct" style="color:var(--accent)">—</div>
+      <div class="sum-lbl">Průměrné plnění</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-stat">
+      <div class="sum-val" id="s-fakturovano" style="color:var(--ok)">—</div>
+      <div class="sum-lbl">Zaplaceno</div>
+    </div>
+    <div class="sum-divider"></div>
+    <div class="sum-stat">
+      <div class="sum-val" id="s-obrat" style="color:var(--gold)">—</div>
+      <div class="sum-lbl">Obrat celkem</div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR / FILTRY -->
+  <div class="toolbar">
+    <span class="filter-label">Stav:</span>
+    <div class="filter-bar" id="status-filters">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Vše</button>
+      <button class="filter-btn" onclick="setFilter('new',this)">Nové</button>
+      <button class="filter-btn" onclick="setFilter('active',this)">Probíhající</button>
+      <button class="filter-btn" onclick="setFilter('done',this)">Dokončené</button>
+      <button class="filter-btn" onclick="setFilter('hold',this)">Pozastavené</button>
+    </div>
+    <div class="sep"></div>
+    <span id="count-label" class="mono text-m" style="font-size:11px"></span>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="projects-grid" id="projects-grid">
+      <div class="loading-state"><div class="spinner"></div> Načítám data projektů…</div>
+    </div>
+  </div>
+
+  <div class="page-footer" id="footer-date"></div>
+</div>
+
+<!-- ═══ MODAL: PŘIDAT PROJEKT (wizard) ═══ -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal modal-lg">
+    <div class="modal-title">
+      Nový projekt
+      <span class="modal-title-sub" id="wiz-step-label">Krok 1 / 4</span>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="step-indicator" id="wiz-steps">
+      <div class="step active" id="step-ind-0">
+        <div class="step-num">1</div>
+        <span class="step-label">Základní údaje</span>
+      </div>
+      <div class="step" id="step-ind-1">
+        <div class="step-num">2</div>
+        <span class="step-label">Tým</span>
+      </div>
+      <div class="step" id="step-ind-2">
+        <div class="step-num">3</div>
+        <span class="step-label">Fáze projektu</span>
+      </div>
+      <div class="step" id="step-ind-3">
+        <div class="step-num">4</div>
+        <span class="step-label">Finance</span>
+      </div>
+    </div>
+
+    <!-- STEP 0: Základní údaje -->
+    <div id="wiz-0">
+      <div class="form-inline">
+        <div class="form-row">
+          <label class="form-label required">Název projektu</label>
+          <input class="form-input" id="f-name" placeholder="Rekonstrukce RD Vamberk č.p. 340">
+        </div>
+        <div class="form-row">
+          <label class="form-label required">Číslo zakázky</label>
+          <input class="form-input" id="f-num" placeholder="2601">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Adresa objektu</label>
+        <input class="form-input" id="f-addr" placeholder="Ulice č.p., PSČ Město">
+      </div>
+      <div class="form-inline">
+        <div class="form-row">
+          <label class="form-label required">Objednatel / investor</label>
+          <input class="form-input" id="f-client" placeholder="Jméno nebo firma">
+        </div>
+        <div class="form-row">
+          <label class="form-label required">Hlavní inženýr projektu (HIP)</label>
+          <input class="form-input" id="f-hip" placeholder="Ing. Petr Pojezdala">
+        </div>
+      </div>
+      <div class="form-inline">
+        <div class="form-row">
+          <label class="form-label">Odkaz na Google Disk</label>
+          <input class="form-input" id="f-drive" placeholder="https://drive.google.com/…">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Stav zakázky</label>
+          <select class="form-select" id="f-status">
+            <option value="new">Nová</option>
+            <option value="active" selected>Probíhá</option>
+            <option value="hold">Pozastavena</option>
+            <option value="done">Dokončena</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-inline">
+        <div class="form-row">
+          <label class="form-label">Datum zahájení</label>
+          <input class="form-input" id="f-start" type="date">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Předpokládaný termín dokončení</label>
+          <input class="form-input" id="f-end" type="date">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Tým -->
+    <div id="wiz-1" style="display:none">
+      <div class="form-row">
+        <label class="form-label">Vyberte pracovníky přiřazené k projektu</label>
+        <div id="wiz-workers-list" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+        <div style="margin-top:10px;font-family:var(--mono);font-size:10px;color:var(--text-m)">
+          Pracovníky lze spravovat v sekci <a href="pracovnici.html" style="color:var(--accent)">Pracovníci</a>.
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Autorizovaná osoba</label>
+        <input class="form-input" id="f-auth" placeholder="Ing. arch. Ivona Poláčková">
+      </div>
+    </div>
+
+    <!-- STEP 2: Fáze projektu -->
+    <div id="wiz-2" style="display:none">
+      <div class="form-row">
+        <label class="form-label">Vyberte fáze, které projekt bude obsahovat</label>
+        <div class="phase-selector" id="wiz-phases">
+          <!-- generuje JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Finance -->
+    <div id="wiz-3" style="display:none">
+      <div class="form-row">
+        <label class="form-label">Cenová nabídka — celková hodnota zakázky (bez DPH)</label>
+        <input class="form-input" id="f-price" type="number" placeholder="179000" style="font-family:var(--mono)">
+      </div>
+      <div id="wiz-invoices" style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        <!-- 3 faktury auto-vypočteny -->
+      </div>
+      <div class="form-row" style="margin-top:16px">
+        <label class="form-label">Poznámka k ceně / smlouvě</label>
+        <textarea class="form-textarea" id="f-price-note" rows="2" placeholder="Podmínky splatnosti, zálohy, specifika…"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="wizBack()" id="wiz-btn-back" style="display:none">← Zpět</button>
+      <button class="btn" onclick="Utils.closeModal('modal-add')">Zrušit</button>
+      <button class="btn btn-primary" onclick="wizNext()" id="wiz-btn-next">Další →</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+/* ── STAV ── */
+let projects = [];
+let allStats = {};
+let filterMode = 'all';
+let wizStep = 0;
+let wizWorkers = [];
+let wizSelectedWorkers = [];
+let wizSelectedPhases = [];
+
+/* ── INIT ── */
+async function init() {
+  Sidebar.render('index');
+  document.getElementById('footer-date').textContent =
+    'PP projekt s.r.o. · Dashboard · ' + new Date().getFullYear();
+  await reloadAll();
+}
+
+async function reloadAll() {
+  document.getElementById('projects-grid').innerHTML =
+    '<div class="loading-state"><div class="spinner"></div> Načítám data projektů…</div>';
+
+  projects = await STORE.getProjects();
+
+  // Načíst statistiky pro všechny projekty paralelně
+  const stats = await Promise.all(projects.map(async p => {
+    const data = await STORE.getTasks(p.id);
+    return { id: p.id, stats: Utils.calcProgress(data.tasks || []) };
+  }));
+  stats.forEach(s => allStats[s.id] = s.stats);
+
+  // Finance
+  const fin = await STORE.getFinance();
+  updateSummary(fin);
+  renderGrid();
+}
+
+/* ── RENDER ── */
+function renderGrid() {
+  const grid = document.getElementById('projects-grid');
+  const filtered = filterMode === 'all'
+    ? projects
+    : projects.filter(p => p.status === filterMode);
+
+  document.getElementById('count-label').textContent =
+    `Zobrazeno ${filtered.length} / ${projects.length} projektů`;
+
+  if (!filtered.length) {
+    grid.innerHTML = projects.length
+      ? `<div class="empty-state"><div class="empty-icon">🔍</div>Žádné projekty v tomto filtru</div>`
+      : `<div class="empty-dashboard">
+           <div style="font-size:48px;margin-bottom:16px">📁</div>
+           <h2>Zatím žádné projekty</h2>
+           <p>Začněte přidáním první zakázky.</p>
+           <button class="btn btn-primary" onclick="openAddWizard()">+ Přidat první projekt</button>
+         </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => renderCard(p)).join('');
+}
+
+function renderCard(p) {
+  const s = allStats[p.id] || { total:0, done:0, inprog:0, waiting:0, open:0, pct:0 };
+  const donut = Utils.buildDonut(s.pct, p.color, 80);
+  const phases = p.phases || [];
+
+  const badgeClass = { new:'badge-new', active:'badge-active', done:'badge-done', hold:'badge-hold' }[p.status] || 'badge-new';
+  const badgeLabel = Utils.projectStatusLabel(p.status);
+
+  const phasesHtml = phases.slice(0, 5).map((ph, i) => {
+    const phTasks = [];  // tasks by phase computed separately if needed
+    const pct = 0; // simplified — full per-phase pct in checklist
+    return `<div class="phase-row">
+      <span class="phase-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="phase-name">${ph.label}</span>
+      <div class="phase-bar-out"><div class="phase-bar-in" style="width:0%;background:${p.color}"></div></div>
+      <span class="phase-cnt">—</span>
+    </div>`;
+  }).join('');
+
+  const team = (p.team || []);
+  const teamHtml = team.slice(0,5).map(t =>
+    `<span class="team-chip">${t}</span>`).join('');
+
+  return `<div class="proj-card">
+    <div class="proj-card-header">
+      <div class="color-bar" style="background:${p.color}"></div>
+      <div class="proj-card-info">
+        <div class="proj-card-id">
+          ${p.num ? `Zakázka #${p.num} · ` : ''}
+          <span class="badge ${badgeClass}">${badgeLabel}</span>
+        </div>
+        <div class="proj-card-name">${p.name}</div>
+        <div class="proj-card-addr">${p.address || '—'}</div>
+      </div>
+      <div class="proj-card-links">
+        <a class="proj-link" href="projekt.html?id=${p.id}">↗ Checklist</a>
+        ${p.driveUrl ? `<a class="proj-link drive" href="${p.driveUrl}" target="_blank" rel="noopener">▲ Google Disk</a>` : ''}
+        <button class="btn btn-sm" onclick="editProject('${p.id}')" title="Upravit" style="font-size:10px;padding:2px 7px">✎</button>
+      </div>
+    </div>
+    <div class="proj-card-body">
+      <div class="proj-donut-wrap">
+        <div class="donut-container">
+          ${donut}
+          <div class="donut-center">
+            <span class="donut-pct" style="color:${p.color}">${s.pct}%</span>
+            <span class="donut-sub">splněno</span>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-row"><div class="legend-dot" style="background:var(--ok)"></div>${s.done} dokončeno</div>
+          <div class="legend-row"><div class="legend-dot" style="background:var(--warn)"></div>${s.inprog} probíhá</div>
+          <div class="legend-row"><div class="legend-dot" style="background:var(--accent)"></div>${s.waiting} čeká</div>
+          <div class="legend-row"><div class="legend-dot" style="background:var(--border-s)"></div>${s.open} nezahájeno</div>
+        </div>
+      </div>
+      <div class="proj-right">
+        <div class="phases-list">${phasesHtml || '<div class="text-m mono" style="font-size:10px">Žádné fáze</div>'}</div>
+        <div class="team-row">
+          <span class="team-lbl">Tým</span>
+          ${teamHtml || '<span class="text-m mono" style="font-size:10px">Nepřiřazeno</span>'}
+        </div>
+        <div class="last-act">
+          <div class="act-dot"></div>
+          <span>${p.client ? `Objednatel: ${p.client}` : 'HIP: ' + (p.hip || '—')}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── SUMMARY ── */
+async function updateSummary(fin) {
+  const total   = projects.length;
+  const active  = projects.filter(p => p.status === 'active').length;
+  const done    = projects.filter(p => p.status === 'done').length;
+
+  let totalTasks = 0, totalDone = 0;
+  Object.values(allStats).forEach(s => { totalTasks += s.total; totalDone += s.done; });
+  const pct = totalTasks ? Math.round(totalDone / totalTasks * 100) : 0;
+
+  // Finance z FINANCE store
+  let zaplaceno = 0, obrat = 0;
+  if (fin && fin.projects) {
+    Object.values(fin.projects).forEach(fp => {
+      (fp.invoices || []).forEach(inv => {
+        obrat += Utils.parseKc(inv.amount);
+        if (inv.status === 'zaplaceno') zaplaceno += Utils.parseKc(inv.amount);
+      });
+    });
+  }
+
+  document.getElementById('s-count').textContent = total;
+  document.getElementById('s-active').textContent = active;
+  document.getElementById('s-done').textContent  = done;
+  document.getElementById('s-pct').textContent   = pct + '%';
+  document.getElementById('s-fakturovano').textContent = Utils.formatKc(zaplaceno);
+  document.getElementById('s-obrat').textContent       = Utils.formatKc(obrat);
+}
+
+/* ── FILTRY ── */
+function setFilter(mode, btn) {
+  filterMode = mode;
+  document.querySelectorAll('#status-filters .filter-btn')
+    .forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+/* ── WIZARD ── */
+async function openAddWizard() {
+  wizStep = 0;
+  wizSelectedWorkers = [];
+  wizSelectedPhases = [];
+
+  // Reset formuláře
+  ['f-name','f-num','f-addr','f-client','f-hip','f-drive','f-auth','f-price','f-price-note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-status').value = 'active';
+  document.getElementById('f-start').value = Utils.today();
+  document.getElementById('f-end').value = '';
+
+  // Načíst pracovníky
+  wizWorkers = await STORE.getWorkers();
+  renderWizWorkers();
+
+  // Fáze
+  renderWizPhases();
+
+  wizRender();
+  Utils.openModal('modal-add');
+}
+
+function renderWizWorkers() {
+  const el = document.getElementById('wiz-workers-list');
+  if (!wizWorkers.length) {
+    el.innerHTML = '<div class="text-m mono" style="font-size:11px">Žádní pracovníci — přidejte je v sekci <a href="pracovnici.html" style="color:var(--accent)">Pracovníci</a>.</div>';
+    return;
+  }
+  el.innerHTML = wizWorkers.map(w => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:7px 10px;border:1px solid var(--border);border-radius:4px;transition:all .12s;"
+      onmouseover="this.style.borderColor='var(--accent-bd)'"
+      onmouseout="this.style.borderColor=document.getElementById('wc-${w.id}')?.checked?'var(--accent)':'var(--border)'"
+    >
+      <input type="checkbox" id="wc-${w.id}" value="${w.id}" accent-color="var(--accent)"
+        onchange="toggleWizWorker('${w.id}', '${w.name}')">
+      <span style="font-weight:500">${w.name}</span>
+      <span class="chip">${w.role || 'Pracovník'}</span>
+    </label>`).join('');
+}
+
+function toggleWizWorker(id, name) {
+  const idx = wizSelectedWorkers.findIndex(w => w.id === id);
+  if (idx >= 0) wizSelectedWorkers.splice(idx, 1);
+  else wizSelectedWorkers.push({ id, name });
+}
+
+function renderWizPhases() {
+  const el = document.getElementById('wiz-phases');
+  el.innerHTML = CONFIG.PHASE_ORDER.map(key => {
+    const ph = CONFIG.PHASE_TEMPLATES[key];
+    return `<label class="phase-check-item" id="phi-${key}">
+      <input type="checkbox" value="${key}" onchange="toggleWizPhase('${key}', this)">
+      <span class="phase-icon">${ph.icon}</span>
+      <span style="font-size:12px">${ph.label}</span>
+    </label>`;
+  }).join('');
+}
+
+function toggleWizPhase(key, el) {
+  const item = document.getElementById('phi-' + key);
+  if (el.checked) {
+    wizSelectedPhases.push(key);
+    item.classList.add('selected');
+  } else {
+    wizSelectedPhases = wizSelectedPhases.filter(k => k !== key);
+    item.classList.remove('selected');
+  }
+}
+
+function updateWizInvoices() {
+  const price = parseFloat(document.getElementById('f-price').value) || 0;
+  const i1 = Math.round(price * 0.25);
+  const i2 = Math.round(price * 0.50);
+  const i3 = price - i1 - i2;
+  document.getElementById('wiz-invoices').innerHTML = `
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text-m);margin-bottom:4px">
+      Fakturace bude rozdělena do 3 splátek:
+    </div>
+    ${[
+      ['1. faktura — 25 %', i1, 'Úvodní fáze'],
+      ['2. faktura — 50 %', i2, 'Prostřední fáze'],
+      ['3. faktura — 25 %', i3, 'Závěrečná fáze'],
+    ].map((row, i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface3)">
+        <span class="chip" style="min-width:20px;text-align:center">${i+1}</span>
+        <span style="flex:1;font-size:12px">${row[0]} — ${row[2]}</span>
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)">${Utils.formatKc(row[1])}</span>
+        <span class="badge badge-new">Plánováno</span>
+      </div>`).join('')}
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text-m);margin-top:4px">
+      Stav faktur lze průběžně editovat ve Finančním přehledu.
+    </div>`;
+}
+
+function wizRender() {
+  [0,1,2,3].forEach(i => {
+    document.getElementById('wiz-' + i).style.display = i === wizStep ? '' : 'none';
+    const ind = document.getElementById('step-ind-' + i);
+    ind.className = 'step' + (i < wizStep ? ' done' : i === wizStep ? ' active' : '');
+    ind.querySelector('.step-num').textContent = i < wizStep ? '✓' : i + 1;
+  });
+  document.getElementById('wiz-step-label').textContent = `Krok ${wizStep + 1} / 4`;
+  document.getElementById('wiz-btn-back').style.display = wizStep > 0 ? '' : 'none';
+  document.getElementById('wiz-btn-next').textContent = wizStep === 3 ? '✓ Vytvořit projekt' : 'Další →';
+
+  if (wizStep === 3) updateWizInvoices();
+}
+
+function wizBack() {
+  if (wizStep > 0) { wizStep--; wizRender(); }
+}
+
+async function wizNext() {
+  // Validace
+  if (wizStep === 0) {
+    const name   = document.getElementById('f-name').value.trim();
+    const client = document.getElementById('f-client').value.trim();
+    const hip    = document.getElementById('f-hip').value.trim();
+    if (!name)   { Toast.warn('Vyplňte název projektu'); return; }
+    if (!client) { Toast.warn('Vyplňte objednatele'); return; }
+    if (!hip)    { Toast.warn('Vyplňte HIP'); return; }
+  }
+  if (wizStep === 2 && wizSelectedPhases.length === 0) {
+    Toast.warn('Vyberte alespoň jednu fázi projektu'); return;
+  }
+
+  if (wizStep < 3) {
+    wizStep++;
+    wizRender();
+    return;
+  }
+
+  // Uložit projekt
+  await saveNewProject();
+}
+
+async function saveNewProject() {
+  const name   = document.getElementById('f-name').value.trim();
+  const num    = document.getElementById('f-num').value.trim();
+  const addr   = document.getElementById('f-addr').value.trim();
+  const client = document.getElementById('f-client').value.trim();
+  const hip    = document.getElementById('f-hip').value.trim();
+  const drive  = document.getElementById('f-drive').value.trim();
+  const status = document.getElementById('f-status').value;
+  const start  = document.getElementById('f-start').value;
+  const end    = document.getElementById('f-end').value;
+  const auth   = document.getElementById('f-auth').value.trim();
+  const price  = parseFloat(document.getElementById('f-price').value) || 0;
+  const priceNote = document.getElementById('f-price-note').value.trim();
+
+  const id    = STORE.makeProjectId(name);
+  const color = STORE.nextColor();
+
+  // Sestavit fáze s úkoly
+  const phases = wizSelectedPhases.map(key => ({
+    key,
+    label: CONFIG.PHASE_TEMPLATES[key].label,
+    icon:  CONFIG.PHASE_TEMPLATES[key].icon,
+    startDate: start || '',
+    endDate: end || '',
+  }));
+
+  // Sestavit úkoly checklistu
+  const tasks = [];
+  let phaseIdx = 0;
+  wizSelectedPhases.forEach(key => {
+    const tmpl = CONFIG.PHASE_TEMPLATES[key];
+    tmpl.tasks.forEach(t => {
+      tasks.push({
+        ...t,
+        id: t.id + '-' + id.slice(-4),
+        phase: phaseIdx,
+        owner: '',
+        status: 0,
+        progress: 0,
+        deadline: '',
+        note: '',
+        url: '',
+        completed: false,
+      });
+    });
+    phaseIdx++;
+  });
+
+  const project = {
+    id, name, num, address: addr, client, hip, auth,
+    driveUrl: drive, status,
+    startDate: start, endDate: end,
+    color,
+    team: wizSelectedWorkers.map(w => w.name),
+    teamIds: wizSelectedWorkers.map(w => w.id),
+    phases,
+    price,
+    priceNote,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Uložit projekt
+  await STORE.saveProject(project);
+
+  // Uložit úkoly
+  await STORE.saveTasks(id, { tasks, collapsed: {} });
+
+  // Uložit finance
+  const fin = await STORE.getFinance();
+  if (!fin.projects) fin.projects = {};
+  fin.projects[id] = {
+    price,
+    invoices: [
+      { id: 'inv-1', label: '1. faktura — 25 % (úvodní fáze)',     amount: Math.round(price * 0.25), status: 'planovano', date: '', note: '' },
+      { id: 'inv-2', label: '2. faktura — 50 % (prostřední fáze)', amount: Math.round(price * 0.50), status: 'planovano', date: '', note: '' },
+      { id: 'inv-3', label: '3. faktura — 25 % (závěrečná fáze)',  amount: price - Math.round(price * 0.25) - Math.round(price * 0.50), status: 'planovano', date: '', note: '' },
+    ],
+    costs: [],
+  };
+  await STORE.saveFinance(fin);
+
+  // Odměny pracovníků
+  const workers = await STORE.getWorkers();
+  wizSelectedWorkers.forEach(sw => {
+    const w = workers.find(x => x.id === sw.id);
+    if (w) {
+      if (!w.projectRewards) w.projectRewards = {};
+      w.projectRewards[id] = { amount: 0, note: '' };
+    }
+  });
+  if (workers.length) await STORE.saveWorkers(workers);
+
+  Utils.closeModal('modal-add');
+  Toast.ok(`Projekt „${name}" byl vytvořen ✓`);
+  await reloadAll();
+}
+
+/* ── EDIT PROJECT (jednoduchý) ── */
+async function editProject(id) {
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  const ns = prompt('Nový stav (new / active / done / hold):', p.status);
+  if (!ns) return;
+  p.status = ns;
+  await STORE.saveProject(p);
+  Toast.ok('Projekt aktualizován ✓');
+  await reloadAll();
+}
+
+Utils.setupModalClose('modal-add');
+init();
+</script>
+</body>
+</html>
